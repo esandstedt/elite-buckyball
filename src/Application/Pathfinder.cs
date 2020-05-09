@@ -46,6 +46,11 @@ namespace EliteBuckyball.Application
 
                 var (current, f) = this.open.Dequeue();
 
+                if (this.f[current] < f)
+                {
+                    continue;
+                }
+
                 Console.WriteLine("{0,8} {1,8} {2,8} {3,6} {4,6} {5,6}   {6}",
                     i,
                     this.open.Count,
@@ -64,17 +69,22 @@ namespace EliteBuckyball.Application
                 var neighbors = await this.nodeHandler.Neighbors(current);
                 foreach (var neighbor in neighbors)
                 {
-                    var g = this.g[current] + this.nodeHandler.Distance(current, neighbor);
-
-                    if (g < this.g.GetValueOrDefault(neighbor, double.MaxValue))
-                    {
-                        this.cameFrom[neighbor] = current;
-                        this.Enqueue(neighbor, g);
-                    }
+                    this.HandleNeighbor(current, neighbor);
                 }
             }
 
             return new List<string>();
+        }
+
+        private void HandleNeighbor(INode current, INode neighbor)
+        {
+            var g = this.g[current] + this.nodeHandler.Distance(current, neighbor);
+
+            if (g < this.g.GetValueOrDefault(neighbor, double.MaxValue))
+            {
+                this.cameFrom[neighbor] = current;
+                this.Enqueue(neighbor, g);
+            }
         }
 
         private void Enqueue(INode node, double g)

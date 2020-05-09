@@ -44,7 +44,7 @@ namespace EliteBuckyball.Infrastructure
             IList<StarSystem> result = this.dbContext.StarSystems
                 .Where(x =>
                     x.DistanceToNeutron.HasValue &&
-                    x.DistanceToNeutron.Value < 500 &&
+                    x.DistanceToNeutron.Value == 0 &&
                     sectorXList.Contains(x.SectorX) &&
                     sectorYList.Contains(x.SectorY) &&
                     sectorZList.Contains(x.SectorZ)

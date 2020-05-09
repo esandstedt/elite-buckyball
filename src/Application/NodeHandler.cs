@@ -12,10 +12,14 @@ namespace EliteBuckyball.Application
     {
 
         private readonly IStarSystemRepository starSystemRepository;
+        private readonly Node goal;
+        private readonly double jumpRange;
 
-        public NodeHandler(IStarSystemRepository starSystemRepository)
+        public NodeHandler(IStarSystemRepository starSystemRepository, StarSystem goal, double jumpRange)
         {
             this.starSystemRepository = starSystemRepository;
+            this.goal = new Node(goal);
+            this.jumpRange = jumpRange;
         }
 
         public INode Create(StarSystem system)
@@ -25,20 +29,45 @@ namespace EliteBuckyball.Application
 
         public double Distance(INode a, INode b)
         {
-            return Math.Sqrt(
-                Math.Pow(a.StarSystem.X - b.StarSystem.X, 2) + 
-                Math.Pow(a.StarSystem.Y - b.StarSystem.Y, 2) + 
+            var dist = Math.Sqrt(
+                Math.Pow(a.StarSystem.X - b.StarSystem.X, 2) +
+                Math.Pow(a.StarSystem.Y - b.StarSystem.Y, 2) +
                 Math.Pow(a.StarSystem.Z - b.StarSystem.Z, 2)
-            ); 
+            );
+
+            if (dist < 4 * this.jumpRange)
+            {
+                return 1;
+            }
+            else
+            {
+                return Math.Ceiling(dist / this.jumpRange) - 3;
+            }
         }
 
-        public double ShortestDistance(INode a, INode b) => Distance(a, b);
+        public double ShortestDistance(INode a, INode b) {
+
+            var dist = Math.Sqrt(
+                Math.Pow(a.StarSystem.X - b.StarSystem.X, 2) +
+                Math.Pow(a.StarSystem.Y - b.StarSystem.Y, 2) +
+                Math.Pow(a.StarSystem.Z - b.StarSystem.Z, 2)
+            );
+
+            return Math.Ceiling(dist / (4 * this.jumpRange));
+        }
 
         public async Task<List<INode>> Neighbors(INode node)
         {
-            return (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
+            var result = (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
                 .Select(system => (INode) new Node(system))
                 .ToList();
+
+            if (Distance(node, this.goal) < 500)
+            {
+                result.Add(this.goal);
+            }
+
+            return result;
         }
 
         private class Node : INode

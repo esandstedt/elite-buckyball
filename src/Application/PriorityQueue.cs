@@ -7,7 +7,7 @@ namespace EliteBuckyball.Application
 {
     public class PriorityQueue<T>
     {
-        private SortedList<double, T> list = new SortedList<double, T>();
+        private SortedList<double, T> list = new SortedList<double, T>(new DuplicateKeyComparer<double>());
 
         public bool Any() => this.list.Any();
 
@@ -15,15 +15,27 @@ namespace EliteBuckyball.Application
 
         public (T, double) Dequeue()
         {
-            var key = this.list.Keys[0];
-            var item = this.list[key];
+            var pair = this.list.First();
             this.list.RemoveAt(0);
-            return (item, key);
+            return (pair.Value, pair.Key);
         }
 
         public void Enqueue(T item, double priority)
         {
             this.list.Add(priority, item);
+        }
+
+        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
+        {
+            public int Compare(TKey x, TKey y)
+            {
+                int result = x.CompareTo(y);
+
+                if (result == 0)
+                    return 1;   // Handle equality as beeing greater
+                else
+                    return result;
+            }
         }
     }
 }

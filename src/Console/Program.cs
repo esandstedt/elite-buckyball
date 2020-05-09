@@ -34,18 +34,30 @@ namespace EliteBuckyball.ConsoleApp
 
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
+            // Hillary Depot - Blu Thua AI-A c14-10
+
+            var start = await repository.GetAsync("Sol");
+            var goal = await repository.GetAsync("Sagittarius A*");
+
+
             var pathfinder = new Pathfinder(
-                serviceProvider.GetService<INodeHandler>(),
-                await repository.GetAsync("Prue Phreia QI-R d5-0"),
-                await repository.GetAsync("Dryeekoo HL-W d2-0")
+                new NodeHandler(repository, goal, 68.54),
+                start,
+                goal
             );
+            var tStart = DateTime.UtcNow;
 
             var route = await pathfinder.InvokeAsync();
 
+            var tEnd = DateTime.UtcNow;
+
             Console.WriteLine();
+            Console.WriteLine("Time: {0}", (tEnd - tStart));
+            Console.WriteLine();
+            Console.WriteLine("route:");
             foreach (var item in route)
             {
-                Console.WriteLine(item);
+                Console.WriteLine("  - name: {0}", item);
             }
         }
     }
