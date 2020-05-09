@@ -27,15 +27,17 @@ namespace EliteBuckyball.ConsoleApp
                 {
                     options.UseMySql(configuration.GetConnectionString("Default"));
                 })
+                .AddTransient<INodeHandler, NodeHandler>()
                 .AddTransient<IStarSystemRepository, StarSystemRepository>()
                 .BuildServiceProvider();
 
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
-            var start = await repository.GetAsync("Prue Phreia QI-R d5-0");
-            var goal = await repository.GetAsync("Dryeekoo HL-W d2-0");
-
-            var pathfind = new Pathfind(repository, null, start, goal);
+            var pathfind = new Pathfind(
+                serviceProvider.GetService<INodeHandler>(),
+                await repository.GetAsync("Prue Phreia QI-R d5-0"),
+                await repository.GetAsync("Dryeekoo HL-W d2-0")
+            );
 
             var route = await pathfind.InvokeAsync();
 

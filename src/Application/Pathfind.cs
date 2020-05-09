@@ -1,40 +1,37 @@
 ﻿using EliteBuckyball.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace EliteBuckyball.Application
 {
-
     public class Pathfind
     {
 
-        private readonly IStarSystemRepository starSystemRepository;
-        private readonly Ship ship;
-        private readonly StarSystem start;
-        private readonly StarSystem goal;
+        private readonly INodeHandler nodeHandler;
+        private readonly INode start;
+        private readonly INode goal;
 
         private Dictionary<string, double> g;
         private Dictionary<string, double> f;
         private Dictionary<string, string> cameFrom;
-        private PriorityQueue<StarSystem> open;
+        private PriorityQueue<INode> open;
 
         public Pathfind(
-            IStarSystemRepository starSystemRepository,
-            Ship ship,
+            INodeHandler nodeHandler,
             StarSystem start,
             StarSystem goal)
         {
-            this.starSystemRepository = starSystemRepository;
-            this.ship = ship;
-            this.start = start;
-            this.goal = goal;
+            this.nodeHandler = nodeHandler;
+            this.start = nodeHandler.Create(start);
+            this.goal = nodeHandler.Create(goal);
 
             this.g = new Dictionary<string, double>();
             this.f = new Dictionary<string, double>();
             this.cameFrom = new Dictionary<string, string>();
-            this.open = new PriorityQueue<StarSystem>();
+            this.open = new PriorityQueue<INode>();
         }
 
         public async Task<List<string>> InvokeAsync()
@@ -52,25 +49,25 @@ namespace EliteBuckyball.Application
                     i,
                     this.open.Count,
                     this.cameFrom.Count,
-                    (int)this.f[current.Name],
-                    (int)this.g[current.Name],
-                    (int)Distance(current, this.goal),
-                    current.Name
+                    (int)this.f[current.Id],
+                    (int)this.g[current.Id],
+                    (int)nodeHandler.Distance(current, this.goal),
+                    current.Id
                 );
 
-                if (current.Id == goal.Id)
+                if (current.StarSystem.Id == goal.StarSystem.Id)
                 {
                     return this.GenerateRoute();
                 }
 
-                var neighbors = await this.starSystemRepository.GetNeighborsAsync(current, 500);
+                var neighbors = await this.nodeHandler.Neighbors(current);
                 foreach (var neighbor in neighbors)
                 {
-                    var g = this.g[current.Name] + this.Distance(current, neighbor);
+                    var g = this.g[current.Id] + this.nodeHandler.Distance(current, neighbor);
 
-                    if (g < this.g.GetValueOrDefault(neighbor.Name, double.MaxValue))
+                    if (g < this.g.GetValueOrDefault(neighbor.Id, double.MaxValue))
                     {
-                        this.cameFrom[neighbor.Name] = current.Name;
+                        this.cameFrom[neighbor.StarSystem.Name] = current.StarSystem.Name;
                         this.Enqueue(neighbor, g);
                     }
                 }
@@ -79,28 +76,19 @@ namespace EliteBuckyball.Application
             return new List<string>();
         }
 
-        private double Distance(StarSystem a, StarSystem b)
+        private void Enqueue(INode node, double g)
         {
-            return Math.Sqrt(
-                Math.Pow(a.X - b.X, 2) + 
-                Math.Pow(a.Y - b.Y, 2) + 
-                Math.Pow(a.Z - b.Z, 2)
-            ); 
-        }
-
-        private void Enqueue(StarSystem system, double g)
-        {
-            this.g[system.Name] = g;
-            var f = g + this.Distance(system, this.goal);
-            this.f[system.Name] = f;
-            this.open.Enqueue(system, f);
+            this.g[node.Id] = g;
+            var f = g + this.nodeHandler.Distance(node, this.goal);
+            this.f[node.Id] = f;
+            this.open.Enqueue(node, f);
         }
 
         private List<string> GenerateRoute()
         {
             var result = new List<string>();
 
-            var current = this.goal.Name;
+            var current = this.goal.StarSystem.Name;
             while (this.cameFrom.ContainsKey(current))
             {
                 result.Insert(0, current);
