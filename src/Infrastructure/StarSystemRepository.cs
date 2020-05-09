@@ -14,10 +14,12 @@ namespace EliteBuckyball.Infrastructure
     {
 
         private readonly ApplicationDbContext dbContext;
+        private readonly Dictionary<(int, int, int), Sector> sectors;
 
         public StarSystemRepository(ApplicationDbContext dbContext)
         {
             this.dbContext = dbContext;
+            this.sectors = new Dictionary<(int, int, int), Sector>();
         }
 
         public async Task<StarSystem> GetAsync(string name)
@@ -33,28 +35,81 @@ namespace EliteBuckyball.Infrastructure
 
         public Task<IList<StarSystem>> GetNeighborsAsync(StarSystem system, double distance)
         {
-            var sectorX = (int)Math.Floor(system.X / 1000);
-            var sectorY = (int)Math.Floor(system.Y / 1000);
-            var sectorZ = (int)Math.Floor(system.Z / 1000);
+            var minSectorX = (int)Math.Floor((system.X - distance) / 1000);
+            var maxSectorX = (int)Math.Floor((system.X + distance) / 1000);
+            var minSectorY = (int)Math.Floor((system.Y - distance) / 1000);
+            var maxSectorY = (int)Math.Floor((system.Y + distance) / 1000);
+            var minSectorZ = (int)Math.Floor((system.Z - distance) / 1000);
+            var maxSectorZ = (int)Math.Floor((system.Z + distance) / 1000);
 
-            var sectorXList = new List<int> { sectorX - 1, sectorX, sectorX + 1 };
-            var sectorYList = new List<int> { sectorY - 1, sectorY, sectorY + 1 };
-            var sectorZList = new List<int> { sectorZ - 1, sectorZ, sectorZ + 1 };
+            var sectors = new List<Sector>();
 
-            IList<StarSystem> result = this.dbContext.StarSystems
-                .Where(x =>
-                    x.DistanceToNeutron.HasValue &&
-                    x.DistanceToNeutron.Value == 0 &&
-                    sectorXList.Contains(x.SectorX) &&
-                    sectorYList.Contains(x.SectorY) &&
-                    sectorZList.Contains(x.SectorZ)
-                )
-                .Select(Convert)
-                .ToList()
-                .Where(x => Distance(system, x) < distance)
+            for (var x = minSectorX; x <= maxSectorX; x++)
+            {
+                for (var y = minSectorY; y <= maxSectorY; y++)
+                {
+                    for (var z = minSectorZ; z <= maxSectorZ; z++)
+                    {
+                        var key = (x, y, z);
+                        if (!this.sectors.ContainsKey(key))
+                        {
+                            this.sectors[key] = new Sector(this.dbContext, x, y, z);
+                        }
+
+                        sectors.Add(this.sectors[key]);
+                    }
+                }
+            }
+
+            IList<StarSystem> result = sectors
+                .SelectMany(s => s.GetNeighbors(system, distance))
                 .ToList();
 
             return Task.FromResult(result);
+        }
+
+        private static StarSystem Convert(Persistence.Entities.StarSystem system)
+        {
+            return new StarSystem
+            {
+                Id = system.Id,
+                Name = system.Name,
+                X = system.X,
+                Y = system.Y,
+                Z = system.Z,
+                HasNeutron = system.DistanceToNeutron.HasValue,
+                DistanceToNeutron = system.DistanceToNeutron ?? default,
+                HasScoopable = system.DistanceToScoopable.HasValue,
+                DistanceToScoopable = system.DistanceToScoopable ?? default,
+                Date = system.Date ?? default
+            };
+        }
+    }
+
+    public class Sector
+    {
+
+        private List<StarSystem> list;
+
+        public Sector(ApplicationDbContext dbContext, int x, int y, int z)
+        {
+            this.list = dbContext.StarSystems
+                .Where(s =>
+                    s.DistanceToNeutron.HasValue &&
+                    s.DistanceToNeutron.Value == 0 &&
+                    s.SectorX == x &&
+                    s.SectorY == y &&
+                    s.SectorZ == z
+                )
+                .Select(Convert)
+                .ToList();
+        }
+
+        public List<StarSystem> GetNeighbors(StarSystem system, double distance)
+        {
+            return this.list
+                .Where(x => Distance(system, x) < distance)
+                .ToList();
         }
 
         private static double Distance(StarSystem a, StarSystem b)

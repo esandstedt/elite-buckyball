@@ -39,12 +39,21 @@ namespace EliteBuckyball.ConsoleApp
             var start = await repository.GetAsync("Sol");
             var goal = await repository.GetAsync("Sagittarius A*");
 
-
-            var pathfinder = new Pathfinder(
-                new NodeHandler(repository, goal, 68.54),
+            var nodeHandler = new CylinderConstraintNodeHandler(
+                new BacktrackingConstraintNodeHandler(
+                    new NodeHandler(repository, goal, 68.5),
+                    goal
+                ),
                 start,
                 goal
             );
+
+            var pathfinder = new Pathfinder(
+                nodeHandler,
+                start,
+                goal
+            );
+
             var tStart = DateTime.UtcNow;
 
             var route = await pathfinder.InvokeAsync();
