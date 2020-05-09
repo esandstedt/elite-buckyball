@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EliteBuckyball.Application
+namespace EliteBuckyball.Application.Interfaces
 {
     public interface INodeHandler
     {

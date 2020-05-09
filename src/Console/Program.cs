@@ -1,4 +1,5 @@
 ﻿using EliteBuckyball.Application;
+using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
 using EliteBuckyball.Infrastructure;
 using EliteBuckyball.Infrastructure.Persistence;

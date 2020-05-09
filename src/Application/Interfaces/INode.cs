@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace EliteBuckyball.Application
+namespace EliteBuckyball.Application.Interfaces
 {
     public interface INode
     {
