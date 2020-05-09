@@ -12,6 +12,8 @@ namespace EliteBuckyball.Application
 
         double Distance(INode a, INode b);
 
+        double ShortestDistance(INode a, INode b);
+
         Task<List<INode>> Neighbors(INode node);
     }
 }

@@ -44,6 +44,8 @@ namespace EliteBuckyball.Application
             ); 
         }
 
+        public double ShortestDistance(INode a, INode b) => Distance(a, b);
+
         public async Task<List<INode>> Neighbors(INode node)
         {
             return (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
