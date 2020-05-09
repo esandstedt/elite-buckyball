@@ -53,6 +53,26 @@ namespace EliteBuckyball.Application
                 StarSystem = system;
             }
 
+            public override int GetHashCode()
+            {
+                return this.Id.GetHashCode();
+            }
+
+            public override bool Equals(object obj)
+            {
+                return Equals(obj as Node);
+            }
+
+            public bool Equals(Node that)
+            {
+                return that != null && this.Id == that.Id;
+            }
+
+            public override string ToString()
+            {
+                return this.StarSystem.Name;
+            }
+
         }
     }
 }

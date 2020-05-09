@@ -15,9 +15,9 @@ namespace EliteBuckyball.Application
         private readonly INode start;
         private readonly INode goal;
 
-        private Dictionary<string, double> g;
-        private Dictionary<string, double> f;
-        private Dictionary<string, string> cameFrom;
+        private Dictionary<INode, double> g;
+        private Dictionary<INode, double> f;
+        private Dictionary<INode, INode> cameFrom;
         private PriorityQueue<INode> open;
 
         public Pathfinder(
@@ -29,9 +29,9 @@ namespace EliteBuckyball.Application
             this.start = nodeHandler.Create(start);
             this.goal = nodeHandler.Create(goal);
 
-            this.g = new Dictionary<string, double>();
-            this.f = new Dictionary<string, double>();
-            this.cameFrom = new Dictionary<string, string>();
+            this.g = new Dictionary<INode, double>();
+            this.f = new Dictionary<INode, double>();
+            this.cameFrom = new Dictionary<INode, INode>();
             this.open = new PriorityQueue<INode>();
         }
 
@@ -50,13 +50,13 @@ namespace EliteBuckyball.Application
                     i,
                     this.open.Count,
                     this.cameFrom.Count,
-                    (int)this.f[current.Id],
-                    (int)this.g[current.Id],
+                    (int)this.f[current],
+                    (int)this.g[current],
                     (int)nodeHandler.Distance(current, this.goal),
-                    current.Id
+                    current
                 );
 
-                if (current.StarSystem.Id == goal.StarSystem.Id)
+                if (current.Equals(goal))
                 {
                     return this.GenerateRoute();
                 }
@@ -64,11 +64,11 @@ namespace EliteBuckyball.Application
                 var neighbors = await this.nodeHandler.Neighbors(current);
                 foreach (var neighbor in neighbors)
                 {
-                    var g = this.g[current.Id] + this.nodeHandler.Distance(current, neighbor);
+                    var g = this.g[current] + this.nodeHandler.Distance(current, neighbor);
 
-                    if (g < this.g.GetValueOrDefault(neighbor.Id, double.MaxValue))
+                    if (g < this.g.GetValueOrDefault(neighbor, double.MaxValue))
                     {
-                        this.cameFrom[neighbor.StarSystem.Name] = current.StarSystem.Name;
+                        this.cameFrom[neighbor] = current;
                         this.Enqueue(neighbor, g);
                     }
                 }
@@ -79,9 +79,9 @@ namespace EliteBuckyball.Application
 
         private void Enqueue(INode node, double g)
         {
-            this.g[node.Id] = g;
+            this.g[node] = g;
             var f = g + this.nodeHandler.ShortestDistance(node, this.goal);
-            this.f[node.Id] = f;
+            this.f[node] = f;
             this.open.Enqueue(node, f);
         }
 
@@ -89,14 +89,14 @@ namespace EliteBuckyball.Application
         {
             var result = new List<string>();
 
-            var current = this.goal.StarSystem.Name;
+            var current = this.goal;
             while (this.cameFrom.ContainsKey(current))
             {
-                result.Insert(0, current);
+                result.Insert(0, current.StarSystem.Name);
                 current = this.cameFrom[current];
             }
 
-            result.Insert(0, current);
+            result.Insert(0, current.StarSystem.Name);
 
             return result;
         }
