@@ -34,14 +34,28 @@ namespace EliteBuckyball.ConsoleApp
 
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
-            // Hillary Depot - Blu Thua AI-A c14-10
+            var ship = new Ship
+            {
+                Name = "DSV Phoenix (Bucky)",
+                DryMass = 482,
+                FuelCapacity = 128,
+                FSD = new FrameShiftDrive
+                {
+                    FuelPower = 2.6,
+                    FuelMultiplier = 0.012,
+                    MaxFuelPerJump = 8,
+                    OptimisedMass = 2902
+                },
+                GuardianBonus = 10.5,
+                FuelScoopRate = 1.245
+            };
 
             var start = await repository.GetAsync("Sol");
-            var goal = await repository.GetAsync("Sagittarius A*");
+            var goal = await repository.GetAsync("Rohini");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(
-                    new NodeHandler(repository, goal, 68.5),
+                    new NodeHandler(repository, ship, goal),
                     goal
                 ),
                 start,

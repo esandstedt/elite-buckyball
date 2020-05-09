@@ -12,14 +12,17 @@ namespace EliteBuckyball.Application
     {
 
         private readonly IStarSystemRepository starSystemRepository;
+        private readonly Ship ship;
         private readonly Node goal;
         private readonly double jumpRange;
 
-        public NodeHandler(IStarSystemRepository starSystemRepository, StarSystem goal, double jumpRange)
+        public NodeHandler(IStarSystemRepository starSystemRepository, Ship ship, StarSystem goal)
         {
             this.starSystemRepository = starSystemRepository;
+            this.ship = ship;
             this.goal = new Node(goal);
-            this.jumpRange = jumpRange;
+
+            this.jumpRange = ship.GetJumpRange();
         }
 
         public INode Create(StarSystem system)

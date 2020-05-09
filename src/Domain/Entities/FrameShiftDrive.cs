@@ -7,13 +7,13 @@ namespace EliteBuckyball.Domain.Entities
     public class FrameShiftDrive
     {
 
-        public float FuelPower { get; set; }
+        public double FuelPower { get; set; }
 
-        public float FuelMultiplier { get; set; }
+        public double FuelMultiplier { get; set; }
 
-        public float MaxFuelPerJump { get; set; }
+        public double MaxFuelPerJump { get; set; }
 
-        public float OptimisedMass { get; set; }
+        public double OptimisedMass { get; set; }
 
     }
 }
