@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace EliteBuckyball.Application
 {
-    public class Pathfind
+    public class Pathfinder
     {
 
         private readonly INodeHandler nodeHandler;
@@ -20,7 +20,7 @@ namespace EliteBuckyball.Application
         private Dictionary<string, string> cameFrom;
         private PriorityQueue<INode> open;
 
-        public Pathfind(
+        public Pathfinder(
             INodeHandler nodeHandler,
             StarSystem start,
             StarSystem goal)

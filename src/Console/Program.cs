@@ -34,13 +34,13 @@ namespace EliteBuckyball.ConsoleApp
 
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
-            var pathfind = new Pathfind(
+            var pathfinder = new Pathfinder(
                 serviceProvider.GetService<INodeHandler>(),
                 await repository.GetAsync("Prue Phreia QI-R d5-0"),
                 await repository.GetAsync("Dryeekoo HL-W d2-0")
             );
 
-            var route = await pathfind.InvokeAsync();
+            var route = await pathfinder.InvokeAsync();
 
             Console.WriteLine();
             foreach (var item in route)

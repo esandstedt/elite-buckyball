@@ -10,19 +10,6 @@ namespace EliteBuckyball.Application
 {
     public class NodeHandler : INodeHandler
     {
-        private class Node : INode
-        {
-
-            public string Id => StarSystem.Name;
-
-            public StarSystem StarSystem { get; }
-
-            public Node(StarSystem system)
-            {
-                StarSystem = system;
-            }
-
-        }
 
         private readonly IStarSystemRepository starSystemRepository;
 
@@ -52,6 +39,20 @@ namespace EliteBuckyball.Application
             return (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
                 .Select(system => (INode) new Node(system))
                 .ToList();
+        }
+
+        private class Node : INode
+        {
+
+            public string Id => StarSystem.Name;
+
+            public StarSystem StarSystem { get; }
+
+            public Node(StarSystem system)
+            {
+                StarSystem = system;
+            }
+
         }
     }
 }
