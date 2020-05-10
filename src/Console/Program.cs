@@ -56,7 +56,7 @@ namespace EliteBuckyball.ConsoleApp
             };
 
             var start = await repository.GetAsync("Sol");
-            var goal = await repository.GetAsync("Gru Hypue KS-T d3-31");
+            var goal = await repository.GetAsync("Sagittarius A*");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(

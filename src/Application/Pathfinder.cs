@@ -42,6 +42,9 @@ namespace EliteBuckyball.Application
                 this.Enqueue(node, 0);
             }
 
+            double closestDistance = double.MaxValue;
+            INode closest = null;
+
             var i = 0;
             while (this.open.Any())
             {
@@ -54,13 +57,22 @@ namespace EliteBuckyball.Application
                     continue;
                 }
 
-                Console.WriteLine("{0,8} {1,8} {2,8} | {3,6} {4,6} {5,6}   {6}",
+                var distance = ((Vector)current.StarSystem).Distance((Vector)this.goal);
+
+                if (distance < closestDistance)
+                {
+                    closest = current;
+                    closestDistance = distance;
+                }
+
+                Console.WriteLine("{0,8} {1,8} {2,8} | {3,6} {4,6} | {5,6} {6,6}   {7}",
                     i,
                     this.open.Count,
                     this.cameFrom.Count,
-                    (int)this.f[current],
+                    TimeSpan.FromSeconds((int)this.f[current]),
+                    TimeSpan.FromSeconds((int)this.g[closest]),
                     (int)this.g[current],
-                    (int)(((Vector)current.StarSystem).Distance((Vector)this.goal)),
+                    (int)distance,
                     current
                 );
 

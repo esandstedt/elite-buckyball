@@ -47,7 +47,7 @@ namespace EliteBuckyball.Application
         private Node CreateNode(StarSystem system, double fuel)
         {
             return new Node(
-                string.Format("{0}-{1}", system.Name, (int)(8 * fuel / this.ship.FuelCapacity)),
+                string.Format("{0}-{1}", system.Name, (int)(fuel / this.ship.FSD.MaxFuelPerJump)),
                 system,
                 fuel
             );
@@ -77,7 +77,8 @@ namespace EliteBuckyball.Application
             {
                 result = result.Concat(new List<IEdge>
                 {
-                    this.CreateEdge(baseNode, this.goal, null)
+                    this.CreateEdge(baseNode, this.goal, null),
+                    this.CreateEdge(baseNode, this.goal, this.ship.FuelCapacity)
                 });
             }
 
