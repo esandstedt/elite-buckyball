@@ -28,9 +28,10 @@ namespace EliteBuckyball.Application
 
             this.cache = new Dictionary<INode, bool>();
         }
-        public INode Create(StarSystem system)
+
+        public List<INode> GetInitialNodes()
         {
-            return this.handler.Create(system);
+            return this.handler.GetInitialNodes();
         }
 
         public double GetShortestDistance(INode a, StarSystem b)

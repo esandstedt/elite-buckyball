@@ -13,19 +13,30 @@ namespace EliteBuckyball.Application
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly Ship ship;
+        private readonly List<double> refuelLevels;
+        private readonly StarSystem start;
         private readonly StarSystem goal;
 
         private readonly Dictionary<int, double> jumpRangeCache;
         private readonly double bestJumpRange;
 
-        public NodeHandler(IStarSystemRepository starSystemRepository, Ship ship, StarSystem goal)
+        public NodeHandler(IStarSystemRepository starSystemRepository, Ship ship, List<double> refuelLevels, StarSystem start, StarSystem goal)
         {
             this.starSystemRepository = starSystemRepository;
             this.ship = ship;
+            this.refuelLevels = refuelLevels;
+            this.start = start;
             this.goal = goal;
 
             this.jumpRangeCache = new Dictionary<int, double>();
             this.bestJumpRange = this.GetJumpRange(ship.FSD.MaxFuelPerJump);
+        }
+
+        public List<INode> GetInitialNodes()
+        {
+            return this.refuelLevels
+                .Select(x => (INode)this.CreateNode(this.start, x))
+                .ToList();
         }
 
         public INode Create(StarSystem system)
@@ -54,18 +65,19 @@ namespace EliteBuckyball.Application
             var baseNode = (Node)node;
 
             var result = (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
-                .SelectMany(system => new List<IEdge>
-                {
-                    this.CreateEdge(baseNode, system, true),
-                    this.CreateEdge(baseNode, system, false)
-                });
+                .SelectMany(system => new List<IEdge>()
+                    .Concat(this.refuelLevels.Select(x => this.CreateEdge(baseNode, system, x)))
+                    .Concat(new List<IEdge>
+                    {
+                        this.CreateEdge(baseNode, system, null)
+                    })
+                );
 
             if (GetDistance(node.StarSystem, this.goal) < 500)
             {
                 result = result.Concat(new List<IEdge>
                 {
-                    this.CreateEdge(baseNode, this.goal, true),
-                    this.CreateEdge(baseNode, this.goal, false)
+                    this.CreateEdge(baseNode, this.goal, null)
                 });
             }
 
@@ -74,7 +86,7 @@ namespace EliteBuckyball.Application
                 .ToList();
         }
 
-        private IEdge CreateEdge(Node node, StarSystem system, bool refuel)
+        private IEdge CreateEdge(Node node, StarSystem system, double? refuel)
         {
             var from = (Vector)node.StarSystem;
             var to = (Vector)system;
@@ -108,8 +120,20 @@ namespace EliteBuckyball.Application
             {
                 fuel -= this.ship.GetFuelCost(fuel, distance / 4);
 
-                if (refuel)
+                // too low fuel
+                if (fuel < 1)
                 {
+                    return null;
+                }
+
+                if (refuel.HasValue)
+                {
+                    // must be above current fuel
+                    if (refuel.Value < fuel)
+                    {
+                        return null;
+                    }
+
                     // must have scoopable 
                     if (!system.HasScoopable || 100 < system.DistanceToScoopable)
                     {
@@ -117,34 +141,43 @@ namespace EliteBuckyball.Application
                     }
 
                     time += this.GetTravelTime(system.DistanceToScoopable);
-                    time += (this.ship.FuelCapacity - fuel) / this.ship.FuelScoopRate;
+                    time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
                     time += 20;
 
-                    fuel = this.ship.FuelCapacity;
+                    fuel = refuel.Value;
                 }
             }
             else
             {
-                // must refuel
-                if (!refuel)
+                fuel -= this.ship.FSD.MaxFuelPerJump;
+
+                // too low fuel
+                if (fuel <  1)
+                {
+                    return null;
+                }
+
+                // must refuel 
+                if (!refuel.HasValue)
+                {
+                    return null;
+                }
+
+                // must be above current fuel
+                if (refuel.Value < fuel)
                 {
                     return null;
                 }
 
                 var maxFuelPerJump = this.ship.FSD.MaxFuelPerJump;
 
-                var fuelToScoop = (this.ship.FuelCapacity - (fuel - maxFuelPerJump)) +
+                var fuelToScoop = (refuel.Value - fuel) +
                     (jumps - 2) * maxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
+                time += 20 * jumps;
 
-                fuel = this.ship.FuelCapacity - maxFuelPerJump;
-            }
-
-            // too low fuel
-            if (fuel < 1)
-            {
-                return null;
+                fuel = refuel.Value - maxFuelPerJump;
             }
 
             return new Edge

@@ -38,7 +38,7 @@ namespace EliteBuckyball.ConsoleApp
             {
                 Name = "DSV Phoenix (Bucky)",
                 DryMass = 482,
-                FuelCapacity = 64,
+                FuelCapacity = 128,
                 FSD = new FrameShiftDrive
                 {
                     FuelPower = 2.6,
@@ -50,12 +50,17 @@ namespace EliteBuckyball.ConsoleApp
                 FuelScoopRate = 1.245
             };
 
+            var refuelLevels = new List<double>
+            {
+                128, 112, 96, 80, 64, 48, 32
+            };
+
             var start = await repository.GetAsync("Sol");
-            var goal = await repository.GetAsync("Rohini");
+            var goal = await repository.GetAsync("Gru Hypue KS-T d3-31");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(
-                    new NodeHandler(repository, ship, goal),
+                    new NodeHandler(repository, ship, refuelLevels, start, goal),
                     goal
                 ),
                 start,
@@ -76,9 +81,10 @@ namespace EliteBuckyball.ConsoleApp
 
             Console.WriteLine();
             Console.WriteLine("Time: {0}", (tEnd - tStart));
+
             Console.WriteLine();
             Console.WriteLine("route:");
-            foreach (var node in route)
+            foreach (var node in route.Cast<NodeHandler.Node>())
             {
                 Console.WriteLine("  - name: {0}", node.StarSystem.Name);
 
@@ -87,7 +93,7 @@ namespace EliteBuckyball.ConsoleApp
                     Console.WriteLine("    neutron: true");
                 }
 
-                Console.WriteLine("    fuel: {0}", (int)((NodeHandler.Node)node).Fuel);
+                Console.WriteLine("    fuel: {0}", (int)node.Fuel);
             }
         }
     }

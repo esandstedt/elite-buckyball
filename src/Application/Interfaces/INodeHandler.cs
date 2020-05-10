@@ -8,7 +8,7 @@ namespace EliteBuckyball.Application.Interfaces
 {
     public interface INodeHandler
     {
-        INode Create(StarSystem system);
+        List<INode> GetInitialNodes();
 
         double GetShortestDistance(INode a, StarSystem b);
 

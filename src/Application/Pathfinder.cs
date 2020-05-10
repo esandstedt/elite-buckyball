@@ -12,7 +12,7 @@ namespace EliteBuckyball.Application
     {
 
         private readonly INodeHandler nodeHandler;
-        private readonly INode start;
+        private readonly StarSystem start;
         private readonly StarSystem goal;
 
         private Dictionary<INode, double> g;
@@ -26,7 +26,7 @@ namespace EliteBuckyball.Application
             StarSystem goal)
         {
             this.nodeHandler = nodeHandler;
-            this.start = nodeHandler.Create(start);
+            this.start = start;
             this.goal = goal;
 
             this.g = new Dictionary<INode, double>();
@@ -37,7 +37,10 @@ namespace EliteBuckyball.Application
 
         public async Task<List<INode>> InvokeAsync()
         {
-            this.Enqueue(this.start, 0);
+            foreach (var node in this.nodeHandler.GetInitialNodes())
+            {
+                this.Enqueue(node, 0);
+            }
 
             var i = 0;
             while (this.open.Any())
@@ -51,7 +54,7 @@ namespace EliteBuckyball.Application
                     continue;
                 }
 
-                Console.WriteLine("{0,8} {1,8} {2,8} {3,6} {4,6} {5,6}   {6}",
+                Console.WriteLine("{0,8} {1,8} {2,8} | {3,6} {4,6} {5,6}   {6}",
                     i,
                     this.open.Count,
                     this.cameFrom.Count,

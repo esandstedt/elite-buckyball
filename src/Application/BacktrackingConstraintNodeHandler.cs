@@ -21,9 +21,9 @@ namespace EliteBuckyball.Application
             this.goal = (Vector)goal;
         }
 
-        public INode Create(StarSystem system)
+        public List<INode> GetInitialNodes()
         {
-            return this.handler.Create(system);
+            return this.handler.GetInitialNodes();
         }
 
         public double GetShortestDistance(INode a, StarSystem b)
@@ -39,6 +39,5 @@ namespace EliteBuckyball.Application
                 .Where(edge => ((Vector)edge.To.StarSystem).Distance(this.goal) <= distance)
                 .ToList();
         }
-
     }
 }
