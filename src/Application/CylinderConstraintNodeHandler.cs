@@ -33,20 +33,22 @@ namespace EliteBuckyball.Application
             return this.handler.Create(system);
         }
 
-        public double Distance(INode a, INode b)
+        public double GetDistance(INode a, INode b)
         {
-            return this.handler.Distance(a, b);
+            return this.handler.GetDistance(a, b);
         }
 
-        public double ShortestDistance(INode a, INode b)
+        public double GetShortestDistance(INode a, INode b)
         {
-            return this.handler.ShortestDistance(a, b);
+            return this.handler.GetShortestDistance(a, b);
         }
 
-        public async Task<List<INode>> Neighbors(INode node)
+        public async Task<List<IEdge>> GetEdges(INode node)
         {
-            return (await this.handler.Neighbors(node))
-                .Where(node => {
+            return (await this.handler.GetEdges(node))
+                .Where(edge => {
+                    var node = edge.To;
+
                     if (!this.cache.ContainsKey(node))
                     {
                         this.cache[node] = this.DistanceFromCenterLine(node) < 2000;

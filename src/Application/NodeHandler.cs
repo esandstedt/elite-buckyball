@@ -30,13 +30,9 @@ namespace EliteBuckyball.Application
             return new Node(system);
         }
 
-        public double Distance(INode a, INode b)
+        public double GetDistance(INode a, INode b)
         {
-            var dist = Math.Sqrt(
-                Math.Pow(a.StarSystem.X - b.StarSystem.X, 2) +
-                Math.Pow(a.StarSystem.Y - b.StarSystem.Y, 2) +
-                Math.Pow(a.StarSystem.Z - b.StarSystem.Z, 2)
-            );
+            var dist = ((Vector)a.StarSystem).Distance((Vector)b.StarSystem);
 
             if (dist < 4 * this.jumpRange)
             {
@@ -48,29 +44,46 @@ namespace EliteBuckyball.Application
             }
         }
 
-        public double ShortestDistance(INode a, INode b) {
-
-            var dist = Math.Sqrt(
-                Math.Pow(a.StarSystem.X - b.StarSystem.X, 2) +
-                Math.Pow(a.StarSystem.Y - b.StarSystem.Y, 2) +
-                Math.Pow(a.StarSystem.Z - b.StarSystem.Z, 2)
-            );
+        public double GetShortestDistance(INode a, INode b)
+        {
+            var dist = ((Vector)a.StarSystem).Distance((Vector)b.StarSystem);
 
             return Math.Ceiling(dist / (4 * this.jumpRange));
         }
 
-        public async Task<List<INode>> Neighbors(INode node)
+        public async Task<List<IEdge>> GetEdges(INode node)
         {
             var result = (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
-                .Select(system => (INode) new Node(system))
+                .Select(system => this.CreateEdge(node, new Node(system)))
                 .ToList();
 
-            if (Distance(node, this.goal) < 500)
+            if (GetDistance(node, this.goal) < 500)
             {
-                result.Add(this.goal);
+                result.Add(this.CreateEdge(node, this.goal));
             }
 
             return result;
+        }
+
+        private IEdge CreateEdge(INode from, INode to)
+        {
+            return new Edge
+            {
+                From = from,
+                To = to,
+                Distance = this.GetDistance(from, to)
+            };
+        }
+
+        private class Edge : IEdge
+        {
+
+            public INode From { get; set; }
+
+            public INode To { get; set; }
+
+            public double Distance { get; set; }
+
         }
 
         private class Node : INode

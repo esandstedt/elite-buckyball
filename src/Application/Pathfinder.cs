@@ -57,7 +57,7 @@ namespace EliteBuckyball.Application
                     this.cameFrom.Count,
                     (int)this.f[current],
                     (int)this.g[current],
-                    (int)nodeHandler.Distance(current, this.goal),
+                    (int)nodeHandler.GetDistance(current, this.goal),
                     current
                 );
 
@@ -66,31 +66,26 @@ namespace EliteBuckyball.Application
                     return this.GenerateRoute();
                 }
 
-                var neighbors = await this.nodeHandler.Neighbors(current);
-                foreach (var neighbor in neighbors)
+                var edges = await this.nodeHandler.GetEdges(current);
+                foreach (var edge in edges)
                 {
-                    this.HandleNeighbor(current, neighbor);
+                    var g = this.g[edge.From] + edge.Distance;
+
+                    if (g < this.g.GetValueOrDefault(edge.To, double.MaxValue))
+                    {
+                        this.cameFrom[edge.To] = edge.From;
+                        this.Enqueue(edge.To, g);
+                    }
                 }
             }
 
             return new List<string>();
         }
 
-        private void HandleNeighbor(INode current, INode neighbor)
-        {
-            var g = this.g[current] + this.nodeHandler.Distance(current, neighbor);
-
-            if (g < this.g.GetValueOrDefault(neighbor, double.MaxValue))
-            {
-                this.cameFrom[neighbor] = current;
-                this.Enqueue(neighbor, g);
-            }
-        }
-
         private void Enqueue(INode node, double g)
         {
             this.g[node] = g;
-            var f = g + this.nodeHandler.ShortestDistance(node, this.goal);
+            var f = g + this.nodeHandler.GetShortestDistance(node, this.goal);
             this.f[node] = f;
             this.open.Enqueue(node, f);
         }

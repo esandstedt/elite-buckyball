@@ -1,4 +1,5 @@
-﻿using EliteBuckyball.Domain.Entities;
+﻿using EliteBuckyball.Application.Interfaces;
+using EliteBuckyball.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Text;
