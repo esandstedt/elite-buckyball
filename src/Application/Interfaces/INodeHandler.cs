@@ -10,9 +10,7 @@ namespace EliteBuckyball.Application.Interfaces
     {
         INode Create(StarSystem system);
 
-        double GetDistance(INode a, INode b);
-
-        double GetShortestDistance(INode a, INode b);
+        double GetShortestDistance(INode a, StarSystem b);
 
         Task<List<IEdge>> GetEdges(INode node);
     }

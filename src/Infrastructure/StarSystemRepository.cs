@@ -96,7 +96,7 @@ namespace EliteBuckyball.Infrastructure
             this.list = dbContext.StarSystems
                 .Where(s =>
                     s.DistanceToNeutron.HasValue &&
-                    s.DistanceToNeutron.Value == 0 &&
+                    s.DistanceToNeutron.Value < 100 &&
                     s.SectorX == x &&
                     s.SectorY == y &&
                     s.SectorZ == z

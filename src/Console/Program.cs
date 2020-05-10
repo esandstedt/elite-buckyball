@@ -38,7 +38,7 @@ namespace EliteBuckyball.ConsoleApp
             {
                 Name = "DSV Phoenix (Bucky)",
                 DryMass = 482,
-                FuelCapacity = 128,
+                FuelCapacity = 64,
                 FSD = new FrameShiftDrive
                 {
                     FuelPower = 2.6,
@@ -78,9 +78,16 @@ namespace EliteBuckyball.ConsoleApp
             Console.WriteLine("Time: {0}", (tEnd - tStart));
             Console.WriteLine();
             Console.WriteLine("route:");
-            foreach (var item in route)
+            foreach (var node in route)
             {
-                Console.WriteLine("  - name: {0}", item);
+                Console.WriteLine("  - name: {0}", node.StarSystem.Name);
+
+                if (node.StarSystem.DistanceToNeutron != 0)
+                {
+                    Console.WriteLine("    neutron: true");
+                }
+
+                Console.WriteLine("    fuel: {0}", (int)((NodeHandler.Node)node).Fuel);
             }
         }
     }

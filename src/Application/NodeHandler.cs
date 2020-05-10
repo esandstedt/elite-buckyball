@@ -13,66 +13,176 @@ namespace EliteBuckyball.Application
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly Ship ship;
-        private readonly Node goal;
-        private readonly double jumpRange;
+        private readonly StarSystem goal;
+
+        private readonly Dictionary<int, double> jumpRangeCache;
+        private readonly double bestJumpRange;
 
         public NodeHandler(IStarSystemRepository starSystemRepository, Ship ship, StarSystem goal)
         {
             this.starSystemRepository = starSystemRepository;
             this.ship = ship;
-            this.goal = new Node(goal);
+            this.goal = goal;
 
-            this.jumpRange = ship.GetJumpRange();
+            this.jumpRangeCache = new Dictionary<int, double>();
+            this.bestJumpRange = this.GetJumpRange(ship.FSD.MaxFuelPerJump);
         }
 
         public INode Create(StarSystem system)
         {
-            return new Node(system);
+            return this.CreateNode(system, this.ship.FuelCapacity);
         }
 
-        public double GetDistance(INode a, INode b)
+        private Node CreateNode(StarSystem system, double fuel)
         {
-            var dist = ((Vector)a.StarSystem).Distance((Vector)b.StarSystem);
-
-            if (dist < 4 * this.jumpRange)
-            {
-                return 1;
-            }
-            else
-            {
-                return Math.Ceiling(dist / this.jumpRange) - 3;
-            }
+            return new Node(
+                string.Format("{0}-{1}", system.Name, (int)(8 * fuel / this.ship.FuelCapacity)),
+                system,
+                fuel
+            );
         }
 
-        public double GetShortestDistance(INode a, INode b)
+        public double GetShortestDistance(INode a, StarSystem b)
         {
-            var dist = ((Vector)a.StarSystem).Distance((Vector)b.StarSystem);
+            var distance = this.GetDistance(a.StarSystem, b);
 
-            return Math.Ceiling(dist / (4 * this.jumpRange));
+            return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
         }
 
         public async Task<List<IEdge>> GetEdges(INode node)
         {
-            var result = (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
-                .Select(system => this.CreateEdge(node, new Node(system)))
-                .ToList();
+            var baseNode = (Node)node;
 
-            if (GetDistance(node, this.goal) < 500)
+            var result = (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
+                .SelectMany(system => new List<IEdge>
+                {
+                    this.CreateEdge(baseNode, system, true),
+                    this.CreateEdge(baseNode, system, false)
+                });
+
+            if (GetDistance(node.StarSystem, this.goal) < 500)
             {
-                result.Add(this.CreateEdge(node, this.goal));
+                result = result.Concat(new List<IEdge>
+                {
+                    this.CreateEdge(baseNode, this.goal, true),
+                    this.CreateEdge(baseNode, this.goal, false)
+                });
             }
 
-            return result;
+            return result
+                .Where(x => x != null)
+                .ToList();
         }
 
-        private IEdge CreateEdge(INode from, INode to)
+        private IEdge CreateEdge(Node node, StarSystem system, bool refuel)
         {
+            var from = (Vector)node.StarSystem;
+            var to = (Vector)system;
+
+            double fuel = node.Fuel;
+            double time = 0;
+
+            var distance = from.Distance(to);
+
+            double fstJumpFactor;
+            var fstJumpRange = this.GetJumpRange(fuel);
+            if (node.StarSystem.HasNeutron && node.StarSystem.DistanceToNeutron < 100)
+            {
+                fstJumpFactor = 4;
+                time += this.GetTravelTime(node.StarSystem.DistanceToNeutron);
+            }
+            else
+            {
+                fstJumpFactor = 2;
+            }
+
+            var rstJumpFactor = 2;
+            var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
+            var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
+
+            double jumps = 1 + Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange));
+
+            time += 50 * jumps;
+
+            if (jumps < 1.5) // only one jump (floating point comparison)
+            {
+                fuel -= this.ship.GetFuelCost(fuel, distance / 4);
+
+                if (refuel)
+                {
+                    // must have scoopable 
+                    if (!system.HasScoopable || 100 < system.DistanceToScoopable)
+                    {
+                        return null;
+                    }
+
+                    time += this.GetTravelTime(system.DistanceToScoopable);
+                    time += (this.ship.FuelCapacity - fuel) / this.ship.FuelScoopRate;
+                    time += 20;
+
+                    fuel = this.ship.FuelCapacity;
+                }
+            }
+            else
+            {
+                // must refuel
+                if (!refuel)
+                {
+                    return null;
+                }
+
+                var maxFuelPerJump = this.ship.FSD.MaxFuelPerJump;
+
+                var fuelToScoop = (this.ship.FuelCapacity - (fuel - maxFuelPerJump)) +
+                    (jumps - 2) * maxFuelPerJump;
+
+                time += fuelToScoop / this.ship.FuelScoopRate;
+
+                fuel = this.ship.FuelCapacity - maxFuelPerJump;
+            }
+
+            // too low fuel
+            if (fuel < 1)
+            {
+                return null;
+            }
+
             return new Edge
             {
-                From = from,
-                To = to,
-                Distance = this.GetDistance(from, to)
+                From = node,
+                To = this.CreateNode(system, fuel),
+                Distance = time
             };
+        }
+
+        private double GetTravelTime(double distance)
+        {
+            if (distance < 1)
+            {
+                return 0;
+            }
+            else
+            {
+                return 12 * Math.Log(distance);
+            }
+        }
+
+
+        private double GetJumpRange(double fuel)
+        {
+            var key = (int)(100 * fuel);
+
+            if (!this.jumpRangeCache.ContainsKey(key))
+            {
+                this.jumpRangeCache[key] = this.ship.GetJumpRange(fuel);
+            }
+
+            return this.jumpRangeCache[key];
+        }
+
+        private double GetDistance(StarSystem a, StarSystem b)
+        {
+            return ((Vector)a).Distance((Vector)b);
         }
 
         private class Edge : IEdge
@@ -86,16 +196,20 @@ namespace EliteBuckyball.Application
 
         }
 
-        private class Node : INode
+        public class Node : INode
         {
 
-            public string Id => StarSystem.Name;
+            public string Id { get; }
 
             public StarSystem StarSystem { get; }
 
-            public Node(StarSystem system)
+            public double Fuel { get; }
+
+            public Node(string id, StarSystem system, double fuel)
             {
-                StarSystem = system;
+                this.Id = id;
+                this.StarSystem = system;
+                this.Fuel = fuel;
             }
 
             public override int GetHashCode()

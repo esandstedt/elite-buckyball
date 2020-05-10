@@ -13,7 +13,7 @@ namespace EliteBuckyball.Application
 
         private readonly INodeHandler nodeHandler;
         private readonly INode start;
-        private readonly INode goal;
+        private readonly StarSystem goal;
 
         private Dictionary<INode, double> g;
         private Dictionary<INode, double> f;
@@ -27,7 +27,7 @@ namespace EliteBuckyball.Application
         {
             this.nodeHandler = nodeHandler;
             this.start = nodeHandler.Create(start);
-            this.goal = nodeHandler.Create(goal);
+            this.goal = goal;
 
             this.g = new Dictionary<INode, double>();
             this.f = new Dictionary<INode, double>();
@@ -35,7 +35,7 @@ namespace EliteBuckyball.Application
             this.open = new PriorityQueue<INode>();
         }
 
-        public async Task<List<string>> InvokeAsync()
+        public async Task<List<INode>> InvokeAsync()
         {
             this.Enqueue(this.start, 0);
 
@@ -57,13 +57,13 @@ namespace EliteBuckyball.Application
                     this.cameFrom.Count,
                     (int)this.f[current],
                     (int)this.g[current],
-                    (int)nodeHandler.GetDistance(current, this.goal),
+                    (int)(((Vector)current.StarSystem).Distance((Vector)this.goal)),
                     current
                 );
 
-                if (current.Equals(goal))
+                if (current.StarSystem.Equals(goal))
                 {
-                    return this.GenerateRoute();
+                    return this.GenerateRoute(current);
                 }
 
                 var edges = await this.nodeHandler.GetEdges(current);
@@ -79,7 +79,7 @@ namespace EliteBuckyball.Application
                 }
             }
 
-            return new List<string>();
+            return new List<INode>();
         }
 
         private void Enqueue(INode node, double g)
@@ -90,18 +90,17 @@ namespace EliteBuckyball.Application
             this.open.Enqueue(node, f);
         }
 
-        private List<string> GenerateRoute()
+        private List<INode> GenerateRoute(INode current)
         {
-            var result = new List<string>();
+            var result = new List<INode>();
 
-            var current = this.goal;
             while (this.cameFrom.ContainsKey(current))
             {
-                result.Insert(0, current.StarSystem.Name);
+                result.Insert(0, current);
                 current = this.cameFrom[current];
             }
 
-            result.Insert(0, current.StarSystem.Name);
+            result.Insert(0, current);
 
             return result;
         }

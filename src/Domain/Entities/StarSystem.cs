@@ -27,5 +27,16 @@ namespace EliteBuckyball.Domain.Entities
 
         public DateTime Date { get; set; }
 
+        public override int GetHashCode()
+        {
+            return this.Id.GetHashCode();
+        }
+
+        public override bool Equals(object obj)
+        {
+            var that = obj as StarSystem;
+            return that != null && this.Id.Equals(that.Id);
+        }
+
     }
 }

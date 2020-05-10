@@ -26,12 +26,7 @@ namespace EliteBuckyball.Application
             return this.handler.Create(system);
         }
 
-        public double GetDistance(INode a, INode b)
-        {
-            return this.handler.GetDistance(a, b);
-        }
-
-        public double GetShortestDistance(INode a, INode b)
+        public double GetShortestDistance(INode a, StarSystem b)
         {
             return this.handler.GetShortestDistance(a, b);
         }
