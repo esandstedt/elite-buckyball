@@ -20,7 +20,6 @@ namespace EliteBuckyball.Application
         private readonly StarSystem start;
         private readonly StarSystem goal;
 
-        private readonly Dictionary<int, double> jumpRangeCache;
         private readonly double bestJumpRange;
 
         public NodeHandler(IStarSystemRepository starSystemRepository, Ship ship, List<double> refuelLevels, StarSystem start, StarSystem goal)
@@ -31,8 +30,7 @@ namespace EliteBuckyball.Application
             this.start = start;
             this.goal = goal;
 
-            this.jumpRangeCache = new Dictionary<int, double>();
-            this.bestJumpRange = this.GetJumpRange(ship.FSD.MaxFuelPerJump);
+            this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
         }
 
         public List<INode> GetInitialNodes()
@@ -58,7 +56,7 @@ namespace EliteBuckyball.Application
 
         public double GetShortestDistance(INode a, StarSystem b)
         {
-            var distance = this.GetDistance(a.StarSystem, b);
+            var distance = ((Vector)a.StarSystem).Distance((Vector)b);
 
             return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
         }
@@ -81,7 +79,6 @@ namespace EliteBuckyball.Application
                 )
                 .ToArray();
 
-
             var partitioner = Partitioner.Create(definitions, true);
 
             var results = partitioner.AsParallel()
@@ -91,53 +88,6 @@ namespace EliteBuckyball.Application
                 .ToList();
 
             return Task.FromResult(results);
-
-            /*
-            // var partitioner = Partitioner.Create(0, definitions.Length);
-
-            var results = new Edge[definitions.Length];
-
-            Parallel.ForEach(partitioner, (range, state) =>
-            {
-                for (var i=range.Item1; i<range.Item2; i++)
-                {
-                    var definition = definitions[i];
-                    results[i] = this.CreateEdge(
-                        definition.Node,
-                        definition.StarSystem,
-                        definition.Refuel
-                    );
-                }
-
-            });
-
-            return Task.FromResult(
-                results
-                    .Cast<IEdge>()
-                    .Where(x => x != null)
-                    .ToList()
-            );
-             */
-            
-            /*
-            var result = neighbors
-                .SelectMany(system => new List<IEdge>()
-                    .Concat(this.refuelLevels.Select(x => this.CreateEdge(baseNode, system, x)))
-                    .Concat(new List<IEdge>
-                    {
-                        this.CreateEdge(baseNode, system, null)
-                    })
-                    .Concat(new List<IEdge>
-                    {
-                        this.CreateEdge(baseNode, this.goal, null),
-                        this.CreateEdge(baseNode, this.goal, this.ship.FuelCapacity)
-                    })
-                )
-                .Where(x => x != null)
-                .ToList();
-
-            return Task.FromResult(result);
-             */
         }
 
         private Edge CreateEdge(Node node, StarSystem system, double? refuel)
@@ -252,24 +202,6 @@ namespace EliteBuckyball.Application
             {
                 return 12 * Math.Log(distance);
             }
-        }
-
-
-        private double GetJumpRange(double fuel)
-        {
-            var key = (int)(100 * fuel);
-
-            if (!this.jumpRangeCache.ContainsKey(key))
-            {
-                this.jumpRangeCache[key] = this.ship.GetJumpRange(fuel);
-            }
-
-            return this.jumpRangeCache[key];
-        }
-
-        private double GetDistance(StarSystem a, StarSystem b)
-        {
-            return ((Vector)a).Distance((Vector)b);
         }
 
         private struct EdgeDefinition

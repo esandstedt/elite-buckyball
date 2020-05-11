@@ -52,11 +52,11 @@ namespace EliteBuckyball.ConsoleApp
 
             var refuelLevels = new List<double>
             {
-                128, 112, 96, 80, 64, 48, 32
+                128, 120, 112, 104, 96, 88, 80, 72, 64, 48, 32
             };
 
             var start = repository.Get("Sol");
-            var goal = repository.Get("Rohini");
+            var goal = repository.Get("Sagittarius A*");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(
