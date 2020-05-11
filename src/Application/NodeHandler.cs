@@ -1,8 +1,11 @@
 ﻿using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -60,34 +63,84 @@ namespace EliteBuckyball.Application
             return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
         }
 
-        public async Task<List<IEdge>> GetEdges(INode node)
+        public Task<List<IEdge>> GetEdges(INode node)
         {
             var baseNode = (Node)node;
 
-            var result = (await this.starSystemRepository.GetNeighborsAsync(node.StarSystem, 500))
+            var neighbors = this.starSystemRepository.GetNeighbors(node.StarSystem, 500).ToList();
+
+            var definitions = neighbors
+                .SelectMany(system => new List<EdgeDefinition>()
+                    .Concat(this.refuelLevels.Select(x => new EdgeDefinition(baseNode, system, x)))
+                    .Concat(new List<EdgeDefinition>
+                    {
+                        new EdgeDefinition(baseNode, system, null),
+                        new EdgeDefinition(baseNode, this.goal, null),
+                        new EdgeDefinition(baseNode, this.goal, this.ship.FuelCapacity)
+                    })
+                )
+                .ToArray();
+
+
+            var partitioner = Partitioner.Create(definitions, true);
+
+            var results = partitioner.AsParallel()
+                .Select(x => this.CreateEdge(x.Node, x.StarSystem, x.Refuel))
+                .Where(x => x != null)
+                .Cast<IEdge>()
+                .ToList();
+
+            return Task.FromResult(results);
+
+            /*
+            // var partitioner = Partitioner.Create(0, definitions.Length);
+
+            var results = new Edge[definitions.Length];
+
+            Parallel.ForEach(partitioner, (range, state) =>
+            {
+                for (var i=range.Item1; i<range.Item2; i++)
+                {
+                    var definition = definitions[i];
+                    results[i] = this.CreateEdge(
+                        definition.Node,
+                        definition.StarSystem,
+                        definition.Refuel
+                    );
+                }
+
+            });
+
+            return Task.FromResult(
+                results
+                    .Cast<IEdge>()
+                    .Where(x => x != null)
+                    .ToList()
+            );
+             */
+            
+            /*
+            var result = neighbors
                 .SelectMany(system => new List<IEdge>()
                     .Concat(this.refuelLevels.Select(x => this.CreateEdge(baseNode, system, x)))
                     .Concat(new List<IEdge>
                     {
                         this.CreateEdge(baseNode, system, null)
                     })
-                );
-
-            if (GetDistance(node.StarSystem, this.goal) < 500)
-            {
-                result = result.Concat(new List<IEdge>
-                {
-                    this.CreateEdge(baseNode, this.goal, null),
-                    this.CreateEdge(baseNode, this.goal, this.ship.FuelCapacity)
-                });
-            }
-
-            return result
+                    .Concat(new List<IEdge>
+                    {
+                        this.CreateEdge(baseNode, this.goal, null),
+                        this.CreateEdge(baseNode, this.goal, this.ship.FuelCapacity)
+                    })
+                )
                 .Where(x => x != null)
                 .ToList();
+
+            return Task.FromResult(result);
+             */
         }
 
-        private IEdge CreateEdge(Node node, StarSystem system, double? refuel)
+        private Edge CreateEdge(Node node, StarSystem system, double? refuel)
         {
             var from = (Vector)node.StarSystem;
             var to = (Vector)system;
@@ -98,7 +151,7 @@ namespace EliteBuckyball.Application
             var distance = from.Distance(to);
 
             double fstJumpFactor;
-            var fstJumpRange = this.GetJumpRange(fuel);
+            var fstJumpRange = this.ship.GetJumpRange(fuel);
             if (node.StarSystem.HasNeutron && node.StarSystem.DistanceToNeutron < 100)
             {
                 fstJumpFactor = 4;
@@ -110,7 +163,7 @@ namespace EliteBuckyball.Application
             }
 
             var rstJumpFactor = 2;
-            var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
+            var rstJumpRange = this.ship.GetJumpRange(this.ship.FuelCapacity);
             var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
 
             double jumps = 1 + Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange));
@@ -217,6 +270,20 @@ namespace EliteBuckyball.Application
         private double GetDistance(StarSystem a, StarSystem b)
         {
             return ((Vector)a).Distance((Vector)b);
+        }
+
+        private struct EdgeDefinition
+        {
+            public Node Node;
+            public StarSystem StarSystem;
+            public double? Refuel;
+
+            public EdgeDefinition(Node node, StarSystem system, double? refuel)
+            {
+                this.Node = node;
+                this.StarSystem = system;
+                this.Refuel = refuel;
+            }
         }
 
         private class Edge : IEdge

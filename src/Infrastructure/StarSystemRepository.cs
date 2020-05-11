@@ -22,9 +22,9 @@ namespace EliteBuckyball.Infrastructure
             this.sectors = new Dictionary<(int, int, int), Sector>();
         }
 
-        public async Task<StarSystem> GetAsync(string name)
+        public StarSystem Get(string name)
         {
-            var result = await this.dbContext.StarSystems.SingleOrDefaultAsync(x => x.Name == name);
+            var result = this.dbContext.StarSystems.SingleOrDefault(x => x.Name == name);
             if (result != null)
             {
                 return Convert(result);
@@ -33,7 +33,7 @@ namespace EliteBuckyball.Infrastructure
             return null;
         }
 
-        public Task<IList<StarSystem>> GetNeighborsAsync(StarSystem system, double distance)
+        public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
             var minSectorX = (int)Math.Floor((system.X - distance) / 1000);
             var maxSectorX = (int)Math.Floor((system.X + distance) / 1000);
@@ -61,11 +61,7 @@ namespace EliteBuckyball.Infrastructure
                 }
             }
 
-            IList<StarSystem> result = sectors
-                .SelectMany(s => s.GetNeighbors(system, distance))
-                .ToList();
-
-            return Task.FromResult(result);
+            return sectors.SelectMany(s => s.GetNeighbors(system, distance));
         }
 
         private static StarSystem Convert(Persistence.Entities.StarSystem system)
@@ -105,11 +101,9 @@ namespace EliteBuckyball.Infrastructure
                 .ToList();
         }
 
-        public List<StarSystem> GetNeighbors(StarSystem system, double distance)
+        public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
-            return this.list
-                .Where(x => Distance(system, x) < distance)
-                .ToList();
+            return this.list.Where(x => Distance(system, x) < distance);
         }
 
         private static double Distance(StarSystem a, StarSystem b)

@@ -55,8 +55,8 @@ namespace EliteBuckyball.ConsoleApp
                 128, 112, 96, 80, 64, 48, 32
             };
 
-            var start = await repository.GetAsync("Sol");
-            var goal = await repository.GetAsync("Sagittarius A*");
+            var start = repository.Get("Sol");
+            var goal = repository.Get("Rohini");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(

@@ -9,9 +9,9 @@ namespace EliteBuckyball.Application.Interfaces
     public interface IStarSystemRepository
     {
 
-        Task<StarSystem> GetAsync(string name);
+        StarSystem Get(string name);
 
-        Task<IList<StarSystem>> GetNeighborsAsync(StarSystem system, double distance);
+        IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance);
 
     }
 }
