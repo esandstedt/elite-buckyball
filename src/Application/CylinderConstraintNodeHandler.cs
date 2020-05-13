@@ -47,7 +47,7 @@ namespace EliteBuckyball.Application
 
                     if (!this.cache.ContainsKey(node))
                     {
-                        this.cache[node] = this.DistanceFromCenterLine(node) < 2000;
+                        this.cache[node] = this.DistanceFromCenterLine(node) < 2500;
                     }
 
                     return this.cache[node];

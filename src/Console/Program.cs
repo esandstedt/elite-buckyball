@@ -55,6 +55,26 @@ namespace EliteBuckyball.ConsoleApp
                 128, 120, 112, 104, 96, 88, 80, 72, 64, 48, 32
             };
 
+            /*
+            var ship = new Ship
+            {
+                Name = "BBV Neutrino",
+                DryMass = 34,
+                FuelCapacity = 6,
+                FSD = new FrameShiftDrive
+                {
+                    FuelPower = 2,
+                    FuelMultiplier = 0.012,
+                    MaxFuelPerJump = 1,
+                    OptimisedMass = 140
+                },
+                GuardianBonus = 6.0,
+                FuelScoopRate = 0.075
+            };
+
+            var refuelLevels = new List<double> { 6 };
+             */
+
             var start = repository.Get("Sol");
             var goal = repository.Get("Sagittarius A*");
 
@@ -93,7 +113,7 @@ namespace EliteBuckyball.ConsoleApp
                     Console.WriteLine("    neutron: true");
                 }
 
-                Console.WriteLine("    fuel: {0}", (int)node.Fuel);
+                Console.WriteLine("    fuel: {0:0.00}", node.Fuel);
             }
         }
     }

@@ -65,13 +65,14 @@ namespace EliteBuckyball.Application
                     closestDistance = distance;
                 }
 
-                Console.WriteLine("{0,8} {1,8} {2,8} | {3,6} {4,6} | {5,6} {6,6}   {7}",
+                Console.WriteLine("{0,8} {1,8} {2,8} | {3,6} {4,6} | {5,6} {6,6} {7,6}   {8}",
                     i,
                     this.open.Count,
                     this.cameFrom.Count,
-                    TimeSpan.FromSeconds((int)this.f[current]),
                     TimeSpan.FromSeconds((int)this.g[closest]),
-                    (int)this.g[current],
+                    (int)closestDistance,
+                    TimeSpan.FromSeconds((int)this.f[current]),
+                    TimeSpan.FromSeconds((int)this.g[current]),
                     (int)distance,
                     current
                 );

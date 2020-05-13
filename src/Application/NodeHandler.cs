@@ -48,7 +48,7 @@ namespace EliteBuckyball.Application
         private Node CreateNode(StarSystem system, double fuel)
         {
             return new Node(
-                string.Format("{0}-{1}", system.Name, (int)(fuel / this.ship.FSD.MaxFuelPerJump)),
+                string.Format("{0}-{1}", system.Name, (int)(2 * fuel / this.ship.FSD.MaxFuelPerJump)),
                 system,
                 fuel
             );
@@ -122,7 +122,7 @@ namespace EliteBuckyball.Application
 
             if (jumps < 1.5) // only one jump (floating point comparison)
             {
-                fuel -= this.ship.GetFuelCost(fuel, distance / 4);
+                fuel -= this.ship.GetFuelCost(fuel, distance / fstJumpFactor);
 
                 // too low fuel
                 if (fuel < 1)
@@ -146,7 +146,7 @@ namespace EliteBuckyball.Application
 
                     time += this.GetTravelTime(system.DistanceToScoopable);
                     time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
-                    time += 20;
+                    //time += 20;
 
                     fuel = refuel.Value;
                 }
@@ -173,15 +173,13 @@ namespace EliteBuckyball.Application
                     return null;
                 }
 
-                var maxFuelPerJump = this.ship.FSD.MaxFuelPerJump;
-
                 var fuelToScoop = (refuel.Value - fuel) +
-                    (jumps - 2) * maxFuelPerJump;
+                    (jumps - 2) * this.ship.FSD.MaxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
-                time += 20 * jumps;
+                //time += 20 * jumps;
 
-                fuel = refuel.Value - maxFuelPerJump;
+                fuel = refuel.Value - this.ship.FSD.MaxFuelPerJump;
             }
 
             return new Edge
