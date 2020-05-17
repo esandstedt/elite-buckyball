@@ -58,7 +58,8 @@ namespace EliteBuckyball.Application
         {
             var distance = ((Vector)a.StarSystem).Distance((Vector)b);
 
-            return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
+            // return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
+            return 50 * distance / (4 * this.bestJumpRange);
         }
 
         public Task<List<IEdge>> GetEdges(INode node)
@@ -146,7 +147,7 @@ namespace EliteBuckyball.Application
 
                     time += this.GetTravelTime(system.DistanceToScoopable);
                     time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
-                    //time += 20;
+                    time += 20;
 
                     fuel = refuel.Value;
                 }
@@ -177,7 +178,7 @@ namespace EliteBuckyball.Application
                     (jumps - 2) * this.ship.FSD.MaxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
-                //time += 20 * jumps;
+                time += 20 * jumps;
 
                 fuel = refuel.Value - this.ship.FSD.MaxFuelPerJump;
             }
