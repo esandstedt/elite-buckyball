@@ -57,9 +57,7 @@ namespace EliteBuckyball.Application
         public double GetShortestDistance(INode a, StarSystem b)
         {
             var distance = ((Vector)a.StarSystem).Distance((Vector)b);
-
-            // return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
-            return 50 * distance / (4 * this.bestJumpRange);
+            return 50 * Math.Ceiling(distance / (4 * this.bestJumpRange));
         }
 
         public Task<List<IEdge>> GetEdges(INode node)
