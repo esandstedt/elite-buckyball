@@ -50,9 +50,19 @@ namespace EliteBuckyball.ConsoleApp
                 FuelScoopRate = 1.245
             };
 
-            var refuelLevels = new List<double>
+            var refuelLevels = new List<FuelRange>
             {
-                128, 120, 112, 104, 96, 88, 80, 72, 64, 48, 32
+                // new FuelRange(28,36),
+                // new FuelRange(44,52),
+                new FuelRange(60,68),
+                // new FuelRange(68,76),
+                new FuelRange(76,84),
+                // new FuelRange(84,92),
+                new FuelRange(92,100),
+                // new FuelRange(100,108),
+                new FuelRange(108,116),
+                // new FuelRange(116,124),
+                new FuelRange(124,128),
             };
 
             /*
@@ -75,8 +85,8 @@ namespace EliteBuckyball.ConsoleApp
             var refuelLevels = new List<double> { 6 };
              */
 
-            var start = repository.Get("Sol");
-            var goal = repository.Get("Sagittarius A*");
+            var start = repository.Get("3 Capricorni");
+            var goal = repository.Get("Phua Aub QT-W b1-4");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(
@@ -113,7 +123,16 @@ namespace EliteBuckyball.ConsoleApp
                     Console.WriteLine("    neutron: true");
                 }
 
-                Console.WriteLine("    fuel: {0:0.00}", node.Fuel);
+                if (node.Refuel != null)
+                {
+                    if (node.StarSystem.HasScoopable)
+                    {
+                        Console.WriteLine("    scoopable: true");
+                    }
+
+                    var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
+                    Console.WriteLine("    fuel: {0:0.00}", fuel);
+                }
             }
         }
     }
