@@ -3,6 +3,7 @@ using EliteBuckyball.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -57,7 +58,7 @@ namespace EliteBuckyball.Application
                     continue;
                 }
 
-                var distance = ((Vector)current.StarSystem).Distance((Vector)this.goal);
+                var distance = Vector3.Distance(current.StarSystem.Coordinates, this.goal.Coordinates);
 
                 if (distance < closestDistance)
                 {

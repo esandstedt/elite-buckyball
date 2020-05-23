@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 
 namespace EliteBuckyball.Domain.Entities
@@ -11,11 +12,7 @@ namespace EliteBuckyball.Domain.Entities
 
         public string Name { get; set; }
 
-        public float X { get; set; }
-
-        public float Y { get; set; }
-
-        public float Z { get; set; }
+        public Vector3 Coordinates { get; set; }
 
         public bool HasNeutron { get; set; }
 

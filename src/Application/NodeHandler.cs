@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Dynamic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -65,7 +66,7 @@ namespace EliteBuckyball.Application
             int max = (int)(2 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
 
             return new Node(
-                string.Join('-', system.Name, min, max),
+                (system.Id, min, max),
                 system,
                 fuel,
                 refuel
@@ -74,8 +75,14 @@ namespace EliteBuckyball.Application
 
         public double GetShortestDistance(INode a, StarSystem b)
         {
-            var distance = ((Vector)a.StarSystem).Distance((Vector)b);
-            return TIME_PER_JUMP * Math.Ceiling(distance / (4 * this.bestJumpRange));
+            return GetShortestDistance((Node)a, b);
+        }
+
+        private double GetShortestDistance(Node a, StarSystem b)
+        {
+            var distance = Vector3.Distance(a.StarSystem.Coordinates, b.Coordinates);
+            var jumps = Math.Ceiling(distance / (4 * this.bestJumpRange));
+            return jumps * TIME_PER_JUMP;
         }
 
         public Task<List<IEdge>> GetEdges(INode node)
@@ -150,12 +157,12 @@ namespace EliteBuckyball.Application
 
         private Edge CreateEdge(Node node, double fuel, StarSystem system, double? refuel)
         {
-            var from = (Vector)node.StarSystem;
-            var to = (Vector)system;
+            var from = node.StarSystem.Coordinates;
+            var to = system.Coordinates;
 
             double time = 0;
 
-            var distance = from.Distance(to);
+            var distance = Vector3.Distance(from, to);
 
             double fstJumpFactor;
             var fstJumpRange = this.GetJumpRange(fuel);
@@ -166,10 +173,10 @@ namespace EliteBuckyball.Application
             }
             else
             {
-                fstJumpFactor = 2;
+                fstJumpFactor = 1;
             }
 
-            var rstJumpFactor = 2;
+            var rstJumpFactor = 1;
             var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
             var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
 
@@ -179,7 +186,7 @@ namespace EliteBuckyball.Application
 
             if (jumps < 1.5) // only one jump (floating point comparison)
             {
-                fuel -= this.ship.GetFuelCost(fuel, distance / fstJumpFactor);
+                fuel -= this.GetFuelCost(fuel, distance / fstJumpFactor);
 
                 // too low fuel
                 if (fuel < 1)
@@ -234,7 +241,7 @@ namespace EliteBuckyball.Application
                     (jumps - 2) * this.ship.FSD.MaxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
-                // time += 20 * jumps;
+                time += 20 * jumps;
 
                 fuel = refuel.Value - this.ship.FSD.MaxFuelPerJump;
             }
@@ -263,6 +270,18 @@ namespace EliteBuckyball.Application
             {
                 return 12 * Math.Log(distance);
             }
+        }
+
+        private double GetFuelCost(double fuel, double distance)
+        {
+            var totalMass = this.ship.DryMass + fuel;
+            return this.GetBoostedFuelMultiplier(fuel) * Math.Pow(distance * totalMass / this.ship.FSD.OptimisedMass, this.ship.FSD.FuelPower);
+        }
+
+        private double GetBoostedFuelMultiplier(double fuel)
+        {
+            var baseRange = this.GetJumpRange(fuel);
+            return this.ship.FSD.FuelMultiplier * Math.Pow(baseRange / (baseRange + this.ship.GuardianBonus), this.ship.FSD.FuelPower);
         }
 
         private double GetJumpRange(double fuel)
@@ -302,7 +321,7 @@ namespace EliteBuckyball.Application
         public class Node : INode
         {
 
-            public string Id { get; }
+            public object Id { get; }
 
             public StarSystem StarSystem { get; }
 
@@ -310,7 +329,7 @@ namespace EliteBuckyball.Application
 
             public FuelRange Refuel { get; }
 
-            public Node(string id, StarSystem system, FuelRange fuel, FuelRange refuel)
+            public Node(object id, StarSystem system, FuelRange fuel, FuelRange refuel)
             {
                 this.Id = id;
                 this.StarSystem = system;
@@ -330,7 +349,7 @@ namespace EliteBuckyball.Application
 
             public bool Equals(Node that)
             {
-                return that != null && this.Id == that.Id;
+                return that != null && this.Id.Equals(that.Id);
             }
 
             public override string ToString()

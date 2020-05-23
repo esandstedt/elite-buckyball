@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -35,12 +36,12 @@ namespace EliteBuckyball.Infrastructure
 
         public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
-            var minSectorX = (int)Math.Floor((system.X - distance) / 1000);
-            var maxSectorX = (int)Math.Floor((system.X + distance) / 1000);
-            var minSectorY = (int)Math.Floor((system.Y - distance) / 1000);
-            var maxSectorY = (int)Math.Floor((system.Y + distance) / 1000);
-            var minSectorZ = (int)Math.Floor((system.Z - distance) / 1000);
-            var maxSectorZ = (int)Math.Floor((system.Z + distance) / 1000);
+            var minSectorX = (int)Math.Floor((system.Coordinates.X - distance) / 1000);
+            var maxSectorX = (int)Math.Floor((system.Coordinates.X + distance) / 1000);
+            var minSectorY = (int)Math.Floor((system.Coordinates.Y - distance) / 1000);
+            var maxSectorY = (int)Math.Floor((system.Coordinates.Y + distance) / 1000);
+            var minSectorZ = (int)Math.Floor((system.Coordinates.Z - distance) / 1000);
+            var maxSectorZ = (int)Math.Floor((system.Coordinates.Z + distance) / 1000);
 
             var sectors = new List<Sector>();
 
@@ -70,9 +71,7 @@ namespace EliteBuckyball.Infrastructure
             {
                 Id = system.Id,
                 Name = system.Name,
-                X = system.X,
-                Y = system.Y,
-                Z = system.Z,
+                Coordinates = new Vector3(system.X, system.Y, system.Z),
                 HasNeutron = system.DistanceToNeutron.HasValue,
                 DistanceToNeutron = system.DistanceToNeutron ?? default,
                 HasScoopable = system.DistanceToScoopable.HasValue,
@@ -103,16 +102,12 @@ namespace EliteBuckyball.Infrastructure
 
         public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
-            return this.list.Where(x => Distance(system, x) < distance);
+            return this.list.Where(x => DistanceSquared(system, x) < Math.Pow(distance, 2));
         }
 
-        private static double Distance(StarSystem a, StarSystem b)
+        private static double DistanceSquared(StarSystem a, StarSystem b)
         {
-            return Math.Sqrt(
-                Math.Pow(a.X - b.X, 2) +
-                Math.Pow(a.Y - b.Y, 2) +
-                Math.Pow(a.Z - b.Z, 2)
-            );
+            return (a.Coordinates - b.Coordinates).LengthSquared();
         }
 
         private static StarSystem Convert(Persistence.Entities.StarSystem system)
@@ -121,9 +116,7 @@ namespace EliteBuckyball.Infrastructure
             {
                 Id = system.Id,
                 Name = system.Name,
-                X = system.X,
-                Y = system.Y,
-                Z = system.Z,
+                Coordinates = new Vector3(system.X, system.Y, system.Z),
                 HasNeutron = system.DistanceToNeutron.HasValue,
                 DistanceToNeutron = system.DistanceToNeutron ?? default,
                 HasScoopable = system.DistanceToScoopable.HasValue,

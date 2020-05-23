@@ -52,16 +52,16 @@ namespace EliteBuckyball.ConsoleApp
 
             var refuelLevels = new List<FuelRange>
             {
-                // new FuelRange(28,36),
-                // new FuelRange(44,52),
+                new FuelRange(28,36),
+                new FuelRange(44,52),
                 new FuelRange(60,68),
-                // new FuelRange(68,76),
+                new FuelRange(68,76),
                 new FuelRange(76,84),
-                // new FuelRange(84,92),
+                new FuelRange(84,92),
                 new FuelRange(92,100),
-                // new FuelRange(100,108),
+                new FuelRange(100,108),
                 new FuelRange(108,116),
-                // new FuelRange(116,124),
+                new FuelRange(116,124),
                 new FuelRange(124,128),
             };
 
@@ -85,8 +85,8 @@ namespace EliteBuckyball.ConsoleApp
             var refuelLevels = new List<double> { 6 };
              */
 
-            var start = repository.Get("3 Capricorni");
-            var goal = repository.Get("Phua Aub QT-W b1-4");
+            var start = repository.Get("Lagoon Sector FW-W d1-122");
+            var goal = repository.Get("Rohini");
 
             var nodeHandler = new CylinderConstraintNodeHandler(
                 new BacktrackingConstraintNodeHandler(
