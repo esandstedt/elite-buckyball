@@ -17,6 +17,7 @@ namespace EliteBuckyball.Application
         private const double TIME_PER_JUMP = 52; 
 
         private readonly IStarSystemRepository starSystemRepository;
+        private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
         private readonly Ship ship;
         private readonly IReadOnlyList<FuelRange> refuelLevels;
         private readonly StarSystem start;
@@ -25,9 +26,16 @@ namespace EliteBuckyball.Application
         private readonly double bestJumpRange;
         private readonly double[] jumpRangeCache;
 
-        public NodeHandler(IStarSystemRepository starSystemRepository, Ship ship, List<FuelRange> refuelLevels, StarSystem start, StarSystem goal)
+        public NodeHandler(
+            IStarSystemRepository starSystemRepository,
+            IEnumerable<IEdgeConstraint> edgeConstraints,
+            Ship ship,
+            List<FuelRange> refuelLevels,
+            StarSystem start,
+            StarSystem goal)
         {
             this.starSystemRepository = starSystemRepository;
+            this.edgeConstraints = edgeConstraints;
             this.ship = ship;
             this.refuelLevels = refuelLevels;
             this.start = start;
@@ -94,6 +102,7 @@ namespace EliteBuckyball.Application
             var results = neighbors
                 .AsParallel()
                 .AsUnordered()
+                .Where(x => this.edgeConstraints.All(y => y.IsValid(baseNode.StarSystem, x)))
                 .SelectMany(system => new List<EdgeDefinition>()
                     .Concat(this.refuelLevels.Select(x => new EdgeDefinition(baseNode, system, x)))
                     .Concat(new List<EdgeDefinition>
@@ -301,76 +310,6 @@ namespace EliteBuckyball.Application
                 this.StarSystem = system;
                 this.Refuel = refuel;
             }
-        }
-
-        public class Edge : IEdge
-        {
-
-            public INode From { get; set; }
-
-            public INode To { get; set; }
-
-            public double Distance { get; set; }
-
-            public double Fuel { get; set; }
-
-            public double Jumps { get; set; }
-
-        }
-
-        public class Node : INode
-        {
-
-            public object Id { get; }
-
-            public StarSystem StarSystem { get; }
-
-            public FuelRange Fuel { get; }
-
-            public FuelRange Refuel { get; }
-
-            public Node(object id, StarSystem system, FuelRange fuel, FuelRange refuel)
-            {
-                this.Id = id;
-                this.StarSystem = system;
-                this.Fuel = fuel;
-                this.Refuel = refuel;
-            }
-
-            public override int GetHashCode()
-            {
-                return this.Id.GetHashCode();
-            }
-
-            public override bool Equals(object obj)
-            {
-                return Equals(obj as Node);
-            }
-
-            public bool Equals(Node that)
-            {
-                return that != null && this.Id.Equals(that.Id);
-            }
-
-            public override string ToString()
-            {
-                return this.StarSystem.Name;
-            }
-
-        }
-    }
-
-    public class FuelRange
-    {
-
-        public double Min { get; set; }
-
-        public double Max { get; set; }
-
-        public FuelRange(double min, double max)
-        {
-            this.Min = min;
-            this.Max = max;
         }
 
     }

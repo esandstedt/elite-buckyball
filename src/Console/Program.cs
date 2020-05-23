@@ -85,14 +85,18 @@ namespace EliteBuckyball.ConsoleApp
             var refuelLevels = new List<double> { 6 };
              */
 
-            var start = repository.Get("Lagoon Sector FW-W d1-122");
+            var start = repository.Get("Sol");
             var goal = repository.Get("Rohini");
 
-            var nodeHandler = new CylinderConstraintNodeHandler(
-                new BacktrackingConstraintNodeHandler(
-                    new NodeHandler(repository, ship, refuelLevels, start, goal),
-                    goal
-                ),
+            var nodeHandler = new NodeHandler(
+                repository,
+                new List<IEdgeConstraint>
+                {
+                    new BacktrackingEdgeConstraint(goal),
+                    new CylinderEdgeConstraint(start, goal),
+                },
+                ship,
+                refuelLevels,
                 start,
                 goal
             );
@@ -114,7 +118,7 @@ namespace EliteBuckyball.ConsoleApp
 
             Console.WriteLine();
             Console.WriteLine("route:");
-            foreach (var node in route.Cast<NodeHandler.Node>())
+            foreach (var node in route.Cast<Node>())
             {
                 Console.WriteLine("  - name: {0}", node.StarSystem.Name);
 
