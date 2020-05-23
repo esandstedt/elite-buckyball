@@ -12,16 +12,18 @@ namespace EliteBuckyball.Application
 
         private readonly Vector3 start;
         private readonly Vector3 goal;
+        private readonly float radiusSquared;
 
-        public CylinderEdgeConstraint(StarSystem start, StarSystem goal)
+        public CylinderEdgeConstraint(StarSystem start, StarSystem goal, float radius)
         {
             this.start = start.Coordinates;
             this.goal = goal.Coordinates;
+            this.radiusSquared = radius * radius;
         }
 
         public bool IsValid(StarSystem from, StarSystem to)
         {
-            return this.DistanceSquaredFromCenterLine(to.Coordinates) < Math.Pow(2500, 2);
+            return this.DistanceSquaredFromCenterLine(to.Coordinates) < this.radiusSquared;
         }
 
         private float DistanceSquaredFromCenterLine(Vector3 x0)

@@ -102,7 +102,7 @@ namespace EliteBuckyball.Application
         private void Enqueue(INode node, double g)
         {
             this.g[node] = g;
-            var f = g + this.nodeHandler.GetShortestDistance(node, this.goal);
+            var f = g + this.nodeHandler.GetShortestDistanceToGoal(node);
             this.f[node] = f;
             this.open.Enqueue(node, f);
         }

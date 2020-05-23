@@ -34,6 +34,7 @@ namespace EliteBuckyball.ConsoleApp
 
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
+            /*
             var ship = new Ship
             {
                 Name = "DSV Phoenix (Bucky)",
@@ -64,8 +65,8 @@ namespace EliteBuckyball.ConsoleApp
                 new FuelRange(116,124),
                 new FuelRange(124,128),
             };
+             */
 
-            /*
             var ship = new Ship
             {
                 Name = "BBV Neutrino",
@@ -82,18 +83,20 @@ namespace EliteBuckyball.ConsoleApp
                 FuelScoopRate = 0.075
             };
 
-            var refuelLevels = new List<double> { 6 };
-             */
+            var refuelLevels = new List<FuelRange> { 
+                new FuelRange(6, 6)
+            };
 
             var start = repository.Get("Sol");
-            var goal = repository.Get("Rohini");
+            var goal = repository.Get("Sagittarius A*");
 
             var nodeHandler = new NodeHandler(
                 repository,
                 new List<IEdgeConstraint>
                 {
+                    // new MinimumDistanceEdgeConstraint(200),
                     new BacktrackingEdgeConstraint(goal),
-                    new CylinderEdgeConstraint(start, goal),
+                    new CylinderEdgeConstraint(start, goal, 2000),
                 },
                 ship,
                 refuelLevels,
@@ -127,7 +130,14 @@ namespace EliteBuckyball.ConsoleApp
                     Console.WriteLine("    neutron: true");
                 }
 
-                if (node.Refuel != null)
+                if (node.Refuel == null)
+                {
+                    if (node.StarSystem.HasScoopable && Math.Abs(node.StarSystem.DistanceToScoopable) < 1e-6)
+                    {
+                        Console.WriteLine("    scoopable: false");
+                    }
+                }
+                else 
                 {
                     if (node.StarSystem.HasScoopable)
                     {
@@ -137,6 +147,7 @@ namespace EliteBuckyball.ConsoleApp
                     var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
                     Console.WriteLine("    fuel: {0:0.00}", fuel);
                 }
+                
             }
         }
     }

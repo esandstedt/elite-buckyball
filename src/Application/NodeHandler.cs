@@ -81,14 +81,9 @@ namespace EliteBuckyball.Application
             );
         }
 
-        public double GetShortestDistance(INode a, StarSystem b)
+        public double GetShortestDistanceToGoal(INode a)
         {
-            return GetShortestDistance((Node)a, b);
-        }
-
-        private double GetShortestDistance(Node a, StarSystem b)
-        {
-            var distance = Vector3.Distance(a.StarSystem.Coordinates, b.Coordinates);
+            var distance = Vector3.Distance(a.StarSystem.Coordinates, this.goal.Coordinates);
             var jumps = Math.Ceiling(distance / (4 * this.bestJumpRange));
             return jumps * TIME_PER_JUMP;
         }
