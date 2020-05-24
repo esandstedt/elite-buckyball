@@ -130,9 +130,11 @@ namespace EliteBuckyball.ConsoleApp
                     Console.WriteLine("    neutron: true");
                 }
 
+                var hasPrimaryScoopable = node.StarSystem.HasScoopable && Math.Abs(node.StarSystem.DistanceToScoopable) < 1e-6;
+
                 if (node.Refuel == null)
                 {
-                    if (node.StarSystem.HasScoopable && Math.Abs(node.StarSystem.DistanceToScoopable) < 1e-6)
+                    if (hasPrimaryScoopable)
                     {
                         Console.WriteLine("    scoopable: false");
                     }
@@ -141,7 +143,14 @@ namespace EliteBuckyball.ConsoleApp
                 {
                     if (node.StarSystem.HasScoopable)
                     {
-                        Console.WriteLine("    scoopable: true");
+                        if (node.Jumps == 1)
+                        {
+                            Console.WriteLine("    scoopable: true");
+                        }
+                        else
+                        {
+                            Console.WriteLine("    scoopable: false");
+                        }
                     }
 
                     var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;

@@ -16,7 +16,7 @@ namespace EliteBuckyball.Application
 
         public double Fuel { get; set; }
 
-        public double Jumps { get; set; }
+        public int Jumps { get; set; }
 
     }
 }

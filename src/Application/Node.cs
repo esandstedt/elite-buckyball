@@ -17,12 +17,15 @@ namespace EliteBuckyball.Application
 
         public FuelRange Refuel { get; }
 
-        public Node(object id, StarSystem system, FuelRange fuel, FuelRange refuel)
+        public int Jumps { get; }
+
+        public Node(object id, StarSystem system, FuelRange fuel, FuelRange refuel, int jumps)
         {
             this.Id = id;
             this.StarSystem = system;
             this.Fuel = fuel;
             this.Refuel = refuel;
+            this.Jumps = jumps;
         }
 
         public override int GetHashCode()

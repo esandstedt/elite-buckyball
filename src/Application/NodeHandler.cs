@@ -50,25 +50,11 @@ namespace EliteBuckyball.Application
         public List<INode> GetInitialNodes()
         {
             return this.refuelLevels
-                .Select(x => (INode)this.CreateNode(this.start, x, x))
+                .Select(x => (INode)this.CreateNode(this.start, x, x, 0))
                 .ToList();
         }
 
-        public INode Create(StarSystem system)
-        {
-            var fuel = new FuelRange(
-                this.ship.FuelCapacity,
-                this.ship.FuelCapacity
-            );
-
-            return this.CreateNode(
-                system,
-                fuel,
-                fuel
-            );
-        }
-
-        private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange refuel)
+        private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange refuel, int jumps)
         {
             int min = (int)(2 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
             int max = (int)(2 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
@@ -77,7 +63,8 @@ namespace EliteBuckyball.Application
                 (system.Id, min, max),
                 system,
                 fuel,
-                refuel
+                refuel,
+                jumps
             );
         }
 
@@ -124,24 +111,36 @@ namespace EliteBuckyball.Application
 
         private Edge CreateEdge(Node node, StarSystem system, FuelRange refuel)
         {
-            var min = this.CreateEdge(node, node.Fuel.Min, system, refuel?.Min);
+            var min = this.CreateEdge(node, node.Fuel.Min, system, refuel?.Min, CreateEdgeType.Mininum);
 
             if (min == null)
             {
                 return null;
             }
 
-            var max = this.CreateEdge(node, node.Fuel.Max, system, refuel?.Max);
+            var max = this.CreateEdge(node, node.Fuel.Max, system, refuel?.Max, CreateEdgeType.Maximum);
 
             if (max == null)
             {
                 return null;
             }
 
-            if (1e-6 < Math.Abs(min.Jumps - max.Jumps))
+            if (min.Jumps == 1 && max.Jumps == 1)
             {
+                // Allowed
+            }
+            else if (min.Jumps > 1 && max.Jumps > 1)
+            {
+                // Allowed
+            }
+            else
+            {
+                // Not allowed
                 return null;
             }
+
+            var distance = Math.Max(min.Distance, max.Distance);
+            var jumps = Math.Max(min.Jumps, max.Jumps);
 
             return new Edge
             {
@@ -152,14 +151,15 @@ namespace EliteBuckyball.Application
                         min.Fuel,
                         max.Fuel
                     ),
-                    refuel
+                    refuel,
+                    jumps
                 ),
-                Distance = min.Distance,
-                Jumps = min.Jumps
+                Distance = distance,
+                Jumps = jumps
             };
         }
 
-        private Edge CreateEdge(Node node, double fuel, StarSystem system, double? refuel)
+        private Edge CreateEdge(Node node, double fuel, StarSystem system, double? refuel, CreateEdgeType type)
         {
             var from = node.StarSystem.Coordinates;
             var to = system.Coordinates;
@@ -184,11 +184,11 @@ namespace EliteBuckyball.Application
             var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
             var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
 
-            double jumps = 1 + Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange));
+            var jumps = (int)(1 + Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange)));
 
             time += TIME_PER_JUMP * jumps;
 
-            if (jumps < 1.5) // only one jump (floating point comparison)
+            if (jumps == 1) 
             {
                 fuel -= this.GetFuelCost(fuel, distance / fstJumpFactor);
 
@@ -247,7 +247,18 @@ namespace EliteBuckyball.Application
                 time += fuelToScoop / this.ship.FuelScoopRate;
                 time += 20 * jumps;
 
-                fuel = refuel.Value - this.ship.FSD.MaxFuelPerJump;
+                if (type == CreateEdgeType.Mininum)
+                {
+                    fuel = refuel.Value - this.ship.FSD.MaxFuelPerJump;
+                }
+                else if (type == CreateEdgeType.Maximum)
+                {
+                    fuel = refuel.Value;
+                }
+                else
+                {
+                    throw new InvalidOperationException();
+                }
             }
 
             return new Edge
@@ -256,7 +267,8 @@ namespace EliteBuckyball.Application
                 To = this.CreateNode(
                     system,
                     new FuelRange(fuel, fuel),
-                    refuel.HasValue ? new FuelRange(refuel.Value, refuel.Value) : null
+                    refuel.HasValue ? new FuelRange(refuel.Value, refuel.Value) : null,
+                    jumps
                 ),
                 Distance = time,
                 Fuel = fuel,
@@ -305,6 +317,12 @@ namespace EliteBuckyball.Application
                 this.StarSystem = system;
                 this.Refuel = refuel;
             }
+        }
+
+        private enum CreateEdgeType
+        {
+            Mininum,
+            Maximum
         }
 
     }
