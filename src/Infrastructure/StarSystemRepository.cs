@@ -17,6 +17,10 @@ namespace EliteBuckyball.Infrastructure
         private readonly ApplicationDbContext dbContext;
         private readonly Dictionary<(int, int, int), Sector> sectors;
 
+        private (StarSystem, double, List<StarSystem>) cache;
+        public long cacheHits = 0;
+        public long cacheMisses = 0;
+
         public StarSystemRepository(ApplicationDbContext dbContext)
         {
             this.dbContext = dbContext;
@@ -36,6 +40,16 @@ namespace EliteBuckyball.Infrastructure
 
         public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
+            if (system.Equals(this.cache.Item1) && Math.Abs(distance - this.cache.Item2) < 1e-6)
+            {
+                this.cacheHits += 1;
+                return this.cache.Item3;
+            }
+            else
+            {
+                this.cacheMisses += 1;
+            }
+
             var minSectorX = (int)Math.Floor((system.Coordinates.X - distance) / 1000);
             var maxSectorX = (int)Math.Floor((system.Coordinates.X + distance) / 1000);
             var minSectorY = (int)Math.Floor((system.Coordinates.Y - distance) / 1000);
@@ -62,7 +76,11 @@ namespace EliteBuckyball.Infrastructure
                 }
             }
 
-            return sectors.SelectMany(s => s.GetNeighbors(system, distance));
+            var results = sectors.SelectMany(s => s.GetNeighbors(system, distance)).ToList();
+
+            this.cache = (system, distance, results);
+
+            return results;
         }
 
         private static StarSystem Convert(Persistence.Entities.StarSystem system)
