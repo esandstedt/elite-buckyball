@@ -44,11 +44,10 @@ namespace EliteBuckyball.Application
                 .ToArray();
         }
 
-        public List<INode> GetInitialNodes()
+        public IEnumerable<INode> GetInitialNodes()
         {
             return this.refuelLevels
-                .Select(x => (INode)this.CreateNode(this.start, x, x, 0))
-                .ToList();
+                .Select(x => (INode)this.CreateNode(this.start, x, x, 0));
         }
 
         private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange? refuel, int jumps)
@@ -85,13 +84,13 @@ namespace EliteBuckyball.Application
             return systems;
         }
 
-        public Task<List<IEdge>> GetEdges(INode node)
+        public IEnumerable<IEdge> GetEdges(INode node)
         {
             var baseNode = (Node)node;
 
             var systems = this.GetNeighbors(node, 500);
 
-            var edges = systems
+            return systems
                 .AsParallel()
                 .AsUnordered()
                 .SelectMany(system => new List<Edge?>()
@@ -103,9 +102,7 @@ namespace EliteBuckyball.Application
                 )
                 .Where(x => x != null)
                 .Cast<IEdge>()
-                .ToList();
-
-            return Task.FromResult(edges);
+                .AsSequential();
         }
 
         private Edge? CreateEdge(Node node, StarSystem system, FuelRange? refuel)

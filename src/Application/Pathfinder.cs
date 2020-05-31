@@ -36,7 +36,7 @@ namespace EliteBuckyball.Application
             this.open = new PriorityQueue<INode>();
         }
 
-        public async Task<List<INode>> InvokeAsync()
+        public List<INode> Invoke()
         {
             foreach (var node in this.nodeHandler.GetInitialNodes())
             {
@@ -83,8 +83,7 @@ namespace EliteBuckyball.Application
                     return this.GenerateRoute(current);
                 }
 
-                var edges = await this.nodeHandler.GetEdges(current);
-                foreach (var edge in edges)
+                foreach (var edge in this.nodeHandler.GetEdges(current))
                 {
                     var g = this.g[edge.From] + edge.Distance;
 

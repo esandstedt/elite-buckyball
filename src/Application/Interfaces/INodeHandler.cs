@@ -8,10 +8,10 @@ namespace EliteBuckyball.Application.Interfaces
 {
     public interface INodeHandler
     {
-        List<INode> GetInitialNodes();
+        IEnumerable<INode> GetInitialNodes();
 
         double GetShortestDistanceToGoal(INode a);
 
-        Task<List<IEdge>> GetEdges(INode node);
+        IEnumerable<IEdge> GetEdges(INode node);
     }
 }
