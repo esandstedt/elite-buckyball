@@ -11,7 +11,7 @@ namespace EliteBuckyball.Application
     public class NodeHandler : INodeHandler
     {
 
-        private const double TIME_PER_JUMP = 52; 
+        private const double TIME_PER_JUMP = 52;
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
@@ -72,34 +72,35 @@ namespace EliteBuckyball.Application
             return TIME_PER_JUMP * distance / (4 * this.bestJumpRange);
         }
 
-        public Task<List<IEdge>> GetEdges(INode node)
+        private IEnumerable<StarSystem> GetNeighbors(INode node, double distance)
         {
-            var baseNode = (Node)node;
-
-            var distance = 500;
-
             var systems = this.starSystemRepository.GetNeighbors(node.StarSystem, distance)
-                .Where(x => this.edgeConstraints.All(y => y.IsValid(baseNode.StarSystem, x)));
+                .Where(x => this.edgeConstraints.All(y => y.IsValid(node.StarSystem, x)));
 
             if (Vector3.DistanceSquared(node.StarSystem.Coordinates, this.goal.Coordinates) < distance * distance)
             {
                 systems = systems.Concat(new List<StarSystem> { this.goal });
             }
 
-            var definitions = systems
-                .SelectMany(system => new List<EdgeDefinition>()
-                    .Concat(new List<EdgeDefinition>
-                    {
-                        new EdgeDefinition(baseNode, system, null),
-                    })
-                    .Concat(this.refuelLevels.Select(x => new EdgeDefinition(baseNode, system, x)))
-                )
-                .ToList();
+            return systems;
+        }
 
-            var edges = definitions
+        public Task<List<IEdge>> GetEdges(INode node)
+        {
+            var baseNode = (Node)node;
+
+            var systems = this.GetNeighbors(node, 500);
+
+            var edges = systems
                 .AsParallel()
                 .AsUnordered()
-                .Select(x => this.CreateEdge(x.Node, x.StarSystem, x.Refuel))
+                .SelectMany(system => new List<Edge?>()
+                    .Concat(new List<Edge?>
+                    {
+                        this.CreateEdge(baseNode, system, null)
+                    })
+                    .Concat(this.refuelLevels.Select(x => this.CreateEdge(baseNode, system, x)))
+                )
                 .Where(x => x != null)
                 .Cast<IEdge>()
                 .ToList();
@@ -186,7 +187,7 @@ namespace EliteBuckyball.Application
 
             time += TIME_PER_JUMP * jumps;
 
-            if (jumps == 1) 
+            if (jumps == 1)
             {
                 fuel -= this.GetFuelCost(fuel, distance / fstJumpFactor);
 
@@ -222,7 +223,7 @@ namespace EliteBuckyball.Application
                 fuel -= this.ship.FSD.MaxFuelPerJump;
 
                 // too low fuel
-                if (fuel <  1)
+                if (fuel < 1)
                 {
                     return null;
                 }
@@ -301,20 +302,6 @@ namespace EliteBuckyball.Application
         private double GetJumpRange(double fuel)
         {
             return this.jumpRangeCache[(int)(100 * fuel)];
-        }
-
-        private struct EdgeDefinition
-        {
-            public Node Node;
-            public StarSystem StarSystem;
-            public FuelRange? Refuel;
-
-            public EdgeDefinition(Node node, StarSystem system, FuelRange? refuel)
-            {
-                this.Node = node;
-                this.StarSystem = system;
-                this.Refuel = refuel;
-            }
         }
 
         private enum CreateEdgeType
