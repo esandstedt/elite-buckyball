@@ -15,7 +15,7 @@ namespace EliteBuckyball.ConsoleApp
 {
     public class Program
     {
-        public static async Task Main(string[] args)
+        public static void Main(string[] args)
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
@@ -49,6 +49,7 @@ namespace EliteBuckyball.ConsoleApp
                 FuelScoopRate = 1.245
             };
 
+            /*
             var refuelLevels = new List<FuelRange>
             {
                 new FuelRange(28,36),
@@ -62,6 +63,18 @@ namespace EliteBuckyball.ConsoleApp
                 new FuelRange(108,116),
                 new FuelRange(116,124),
                 new FuelRange(124,128),
+            };
+             */
+
+            var refuelLevels = new List<FuelRange>
+            {
+                new FuelRange(30,34),
+                new FuelRange(46,50),
+                new FuelRange(62,66),
+                new FuelRange(78,82),
+                new FuelRange(94,98),
+                new FuelRange(110,114),
+                new FuelRange(128,128)
             };
 
             /*
@@ -125,17 +138,18 @@ namespace EliteBuckyball.ConsoleApp
                 goal
             );
 
-            var pathfinder = new Pathfinder(
-                nodeHandler,
-                start,
-                goal
-            );
-
             var tStart = DateTime.UtcNow;
 
-            var route = await pathfinder.InvokeAsync();
+            var route = new Pathfinder(nodeHandler).Invoke();
 
             var tEnd = DateTime.UtcNow;
+
+            Console.WriteLine();
+            Console.WriteLine(
+                "Neighbors cache: [Hits={0}, Misses={1}]",
+                nodeHandler.cacheHits,
+                nodeHandler.cacheMisses
+            );
 
             Console.WriteLine();
             Console.WriteLine("Time: {0}", (tEnd - tStart));

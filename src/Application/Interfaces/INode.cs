@@ -12,5 +12,7 @@ namespace EliteBuckyball.Application.Interfaces
 
         public StarSystem StarSystem { get; }
 
+        public bool IsGoal { get; }
+
     }
 }

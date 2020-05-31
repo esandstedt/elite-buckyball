@@ -58,6 +58,7 @@ namespace EliteBuckyball.Application
             return new Node(
                 (system.Id, min, max),
                 system,
+                system.Equals(this.goal),
                 fuel,
                 refuel,
                 jumps
@@ -71,26 +72,42 @@ namespace EliteBuckyball.Application
             return TIME_PER_JUMP * distance / (4 * this.bestJumpRange);
         }
 
-        private IEnumerable<StarSystem> GetNeighbors(INode node, double distance)
-        {
-            var systems = this.starSystemRepository.GetNeighbors(node.StarSystem, distance)
-                .Where(x => this.edgeConstraints.All(y => y.IsValid(node.StarSystem, x)));
 
-            if (Vector3.DistanceSquared(node.StarSystem.Coordinates, this.goal.Coordinates) < distance * distance)
+        private (StarSystem, double, List<StarSystem>) cache;
+        public int cacheHits = 0;
+        public int cacheMisses = 0;
+
+        private IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
+        {
+            if (system.Equals(this.cache.Item1) && Math.Abs(distance - this.cache.Item2) < 1e-6)
             {
-                systems = systems.Concat(new List<StarSystem> { this.goal });
+                this.cacheHits += 1;
+                return this.cache.Item3;
+            }
+            else
+            {
+                this.cacheMisses += 1;
             }
 
-            return systems;
+            var results = this.starSystemRepository.GetNeighbors(system, distance)
+                .Where(x => this.edgeConstraints.All(y => y.IsValid(system, x)))
+                .ToList();
+
+            if (Vector3.DistanceSquared(system.Coordinates, this.goal.Coordinates) < distance * distance)
+            {
+                results.Add(this.goal);
+            }
+
+            this.cache = (system, distance, results);
+
+            return results;
         }
 
         public IEnumerable<IEdge> GetEdges(INode node)
         {
             var baseNode = (Node)node;
 
-            var systems = this.GetNeighbors(node, 500);
-
-            return systems
+            return this.GetNeighbors(node.StarSystem, 500)
                 .AsParallel()
                 .AsUnordered()
                 .SelectMany(system => new List<Edge?>()

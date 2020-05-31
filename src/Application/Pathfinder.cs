@@ -13,22 +13,15 @@ namespace EliteBuckyball.Application
     {
 
         private readonly INodeHandler nodeHandler;
-        private readonly StarSystem start;
-        private readonly StarSystem goal;
 
         private Dictionary<INode, double> g;
         private Dictionary<INode, double> f;
         private Dictionary<INode, INode> cameFrom;
         private PriorityQueue<INode> open;
 
-        public Pathfinder(
-            INodeHandler nodeHandler,
-            StarSystem start,
-            StarSystem goal)
+        public Pathfinder(INodeHandler nodeHandler)
         {
             this.nodeHandler = nodeHandler;
-            this.start = start;
-            this.goal = goal;
 
             this.g = new Dictionary<INode, double>();
             this.f = new Dictionary<INode, double>();
@@ -58,7 +51,7 @@ namespace EliteBuckyball.Application
                     continue;
                 }
 
-                var distance = Vector3.Distance(current.StarSystem.Coordinates, this.goal.Coordinates);
+                var distance = this.nodeHandler.GetShortestDistanceToGoal(current);
 
                 if (distance < closestDistance)
                 {
@@ -71,14 +64,14 @@ namespace EliteBuckyball.Application
                     this.open.Count,
                     this.cameFrom.Count,
                     TimeSpan.FromSeconds((int)this.g[closest]),
-                    (int)closestDistance,
+                    TimeSpan.FromSeconds((int)closestDistance),
                     TimeSpan.FromSeconds((int)this.f[current]),
                     TimeSpan.FromSeconds((int)this.g[current]),
-                    (int)distance,
+                    TimeSpan.FromSeconds((int)distance),
                     current
                 );
 
-                if (current.StarSystem.Equals(goal))
+                if (current.IsGoal)
                 {
                     return this.GenerateRoute(current);
                 }
