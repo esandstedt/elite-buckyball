@@ -110,14 +110,14 @@ namespace EliteBuckyball.Application
 
         private Edge? CreateEdge(Node node, StarSystem system, FuelRange? refuel)
         {
-            var min = this.CreateEdge(node, node.Fuel.Min, system, refuel?.Min, CreateEdgeType.Mininum);
+            var min = this.CreateEdge(node.StarSystem, system, node.Fuel.Min, refuel?.Min, CreateEdgeType.Mininum);
 
             if (min == null)
             {
                 return null;
             }
 
-            var max = this.CreateEdge(node, node.Fuel.Max, system, refuel?.Max, CreateEdgeType.Maximum);
+            var max = this.CreateEdge(node.StarSystem, system, node.Fuel.Max, refuel?.Max, CreateEdgeType.Maximum);
 
             if (max == null)
             {
@@ -153,26 +153,22 @@ namespace EliteBuckyball.Application
                     refuel,
                     jumps
                 ),
-                Distance = distance,
-                Jumps = jumps
+                Distance = distance
             };
         }
 
-        private Edge? CreateEdge(Node node, double fuel, StarSystem system, double? refuel, CreateEdgeType type)
+        private SimpleEdge? CreateEdge(StarSystem from, StarSystem to, double fuel, double? refuel, CreateEdgeType type)
         {
-            var from = node.StarSystem.Coordinates;
-            var to = system.Coordinates;
-
             double time = 0;
 
-            var distance = Vector3.Distance(from, to);
+            var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
 
             double fstJumpFactor;
             var fstJumpRange = this.GetJumpRange(fuel);
-            if (node.StarSystem.HasNeutron && node.StarSystem.DistanceToNeutron < 100)
+            if (from.HasNeutron && from.DistanceToNeutron < 100)
             {
                 fstJumpFactor = 4;
-                time += this.GetTravelTime(node.StarSystem.DistanceToNeutron);
+                time += this.GetTravelTime(from.DistanceToNeutron);
             }
             else
             {
@@ -206,12 +202,12 @@ namespace EliteBuckyball.Application
                     }
 
                     // must have scoopable 
-                    if (!system.HasScoopable || 100 < system.DistanceToScoopable)
+                    if (!to.HasScoopable || 100 < to.DistanceToScoopable)
                     {
                         return null;
                     }
 
-                    time += this.GetTravelTime(system.DistanceToScoopable);
+                    time += this.GetTravelTime(to.DistanceToScoopable);
                     time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
                     time += 20;
 
@@ -260,17 +256,13 @@ namespace EliteBuckyball.Application
                 }
             }
 
-            return new Edge
+            return new SimpleEdge
             {
-                From = node,
-                To = this.CreateNode(
-                    system,
-                    new FuelRange(fuel, fuel),
-                    refuel.HasValue ? new FuelRange(refuel.Value, refuel.Value) : (FuelRange?)null,
-                    jumps
-                ),
+                From = from,
+                To = to,
                 Distance = time,
                 Fuel = fuel,
+                Refuel = refuel,
                 Jumps = jumps
             };
         }
@@ -302,6 +294,23 @@ namespace EliteBuckyball.Application
         private double GetJumpRange(double fuel)
         {
             return this.jumpRangeCache[(int)(100 * fuel)];
+        }
+
+        private struct SimpleEdge
+        {
+
+            public StarSystem From { get; set; }
+
+            public StarSystem To { get; set; }
+
+            public double Distance { get; set; }
+
+            public double Fuel { get; set; }
+
+            public double? Refuel { get; set; }
+
+            public int Jumps { get; set; }
+
         }
 
         private enum CreateEdgeType

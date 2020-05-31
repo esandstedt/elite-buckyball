@@ -14,9 +14,5 @@ namespace EliteBuckyball.Application
 
         public double Distance { get; set; }
 
-        public double Fuel { get; set; }
-
-        public int Jumps { get; set; }
-
     }
 }
