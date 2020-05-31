@@ -9,7 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net.Mime;
 using System.Threading.Tasks;
 
 namespace EliteBuckyball.ConsoleApp
@@ -34,7 +33,6 @@ namespace EliteBuckyball.ConsoleApp
 
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
-            /*
             var ship = new Ship
             {
                 Name = "DSV Phoenix (Bucky)",
@@ -65,8 +63,8 @@ namespace EliteBuckyball.ConsoleApp
                 new FuelRange(116,124),
                 new FuelRange(124,128),
             };
-             */
 
+            /*
             var ship = new Ship
             {
                 Name = "BBV Neutrino",
@@ -86,6 +84,29 @@ namespace EliteBuckyball.ConsoleApp
             var refuelLevels = new List<FuelRange> { 
                 new FuelRange(6, 6)
             };
+             */
+
+            /*
+            var ship = new Ship
+            {
+                Name = "DSV Aurora",
+                DryMass = 340,
+                FuelCapacity = 32,
+                FSD = new FrameShiftDrive
+                {
+                    FuelPower = 2.45,
+                    FuelMultiplier = 0.012,
+                    MaxFuelPerJump = 5,
+                    OptimisedMass = 1693
+                },
+                GuardianBonus = 10.5,
+                FuelScoopRate = 0.878
+            };
+
+            var refuelLevels = new List<FuelRange> { 
+                new FuelRange(32,32)
+            };
+             */
 
             var start = repository.Get("Sol");
             var goal = repository.Get("Sagittarius A*");
@@ -94,8 +115,8 @@ namespace EliteBuckyball.ConsoleApp
                 repository,
                 new List<IEdgeConstraint>
                 {
-                    // new MinimumDistanceEdgeConstraint(200),
-                    new BacktrackingEdgeConstraint(goal),
+                    new MinimumDistanceEdgeConstraint(2 * ship.GetJumpRange()),
+                    new AngleEdgeConstraint(goal, 60),
                     new CylinderEdgeConstraint(start, goal, 2000),
                 },
                 ship,

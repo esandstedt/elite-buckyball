@@ -5,7 +5,7 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
-    public class Edge : IEdge
+    public struct Edge : IEdge
     {
 
         public INode From { get; set; }

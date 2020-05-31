@@ -10,9 +10,9 @@ namespace EliteBuckyball.Application
     public class MinimumDistanceEdgeConstraint : IEdgeConstraint
     {
 
-        private readonly float distanceSquared;
+        private readonly double distanceSquared;
 
-        public MinimumDistanceEdgeConstraint(float distance)
+        public MinimumDistanceEdgeConstraint(double distance)
         {
             this.distanceSquared = distance * distance;
         }

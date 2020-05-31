@@ -102,12 +102,7 @@ namespace EliteBuckyball.Infrastructure
 
         public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
-            return this.list.Where(x => DistanceSquared(system, x) < Math.Pow(distance, 2));
-        }
-
-        private static double DistanceSquared(StarSystem a, StarSystem b)
-        {
-            return (a.Coordinates - b.Coordinates).LengthSquared();
+            return this.list.Where(x => Vector3.DistanceSquared(system.Coordinates, x.Coordinates) < distance * distance);
         }
 
         private static StarSystem Convert(Persistence.Entities.StarSystem system)

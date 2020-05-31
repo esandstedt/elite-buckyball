@@ -4,7 +4,7 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
-    public class FuelRange
+    public struct FuelRange
     {
 
         public double Min { get; set; }

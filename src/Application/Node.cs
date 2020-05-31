@@ -6,7 +6,7 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
-    public class Node : INode
+    public struct Node : INode
     {
 
         public object Id { get; }
@@ -15,11 +15,11 @@ namespace EliteBuckyball.Application
 
         public FuelRange Fuel { get; }
 
-        public FuelRange Refuel { get; }
+        public FuelRange? Refuel { get; }
 
         public int Jumps { get; }
 
-        public Node(object id, StarSystem system, FuelRange fuel, FuelRange refuel, int jumps)
+        public Node(object id, StarSystem system, FuelRange fuel, FuelRange? refuel, int jumps)
         {
             this.Id = id;
             this.StarSystem = system;
@@ -35,12 +35,17 @@ namespace EliteBuckyball.Application
 
         public override bool Equals(object obj)
         {
-            return Equals(obj as Node);
+            if (obj is Node)
+            {
+                return Equals((Node)obj);
+            }
+
+            return false;
         }
 
         public bool Equals(Node that)
         {
-            return that != null && this.Id.Equals(that.Id);
+            return this.Id.Equals(that.Id);
         }
 
         public override string ToString()

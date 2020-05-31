@@ -1,12 +1,9 @@
 ﻿using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
 using System.Numerics;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EliteBuckyball.Application
@@ -54,7 +51,7 @@ namespace EliteBuckyball.Application
                 .ToList();
         }
 
-        private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange refuel, int jumps)
+        private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange? refuel, int jumps)
         {
             int min = (int)(2 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
             int max = (int)(2 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
@@ -71,45 +68,46 @@ namespace EliteBuckyball.Application
         public double GetShortestDistanceToGoal(INode a)
         {
             var distance = Vector3.Distance(a.StarSystem.Coordinates, this.goal.Coordinates);
-            var jumps = Math.Ceiling(distance / (4 * this.bestJumpRange));
-            return jumps * TIME_PER_JUMP;
+            //return TIME_PER_JUMP * Math.Ceiling(distance / (4 * this.bestJumpRange));
+            return TIME_PER_JUMP * distance / (4 * this.bestJumpRange);
         }
 
         public Task<List<IEdge>> GetEdges(INode node)
         {
             var baseNode = (Node)node;
 
-            var neighbors = this.starSystemRepository.GetNeighbors(node.StarSystem, 500).ToList();
+            var distance = 500;
 
-            var results = neighbors
-                .AsParallel()
-                .AsUnordered()
-                .Where(x => this.edgeConstraints.All(y => y.IsValid(baseNode.StarSystem, x)))
+            var systems = this.starSystemRepository.GetNeighbors(node.StarSystem, distance)
+                .Where(x => this.edgeConstraints.All(y => y.IsValid(baseNode.StarSystem, x)));
+
+            if (Vector3.DistanceSquared(node.StarSystem.Coordinates, this.goal.Coordinates) < distance * distance)
+            {
+                systems = systems.Concat(new List<StarSystem> { this.goal });
+            }
+
+            var definitions = systems
                 .SelectMany(system => new List<EdgeDefinition>()
-                    .Concat(this.refuelLevels.Select(x => new EdgeDefinition(baseNode, system, x)))
                     .Concat(new List<EdgeDefinition>
                     {
                         new EdgeDefinition(baseNode, system, null),
-                        new EdgeDefinition(baseNode, this.goal, null),
-                        new EdgeDefinition(
-                            baseNode,
-                            this.goal,
-                            new FuelRange(
-                                this.ship.FuelCapacity,
-                                this.ship.FuelCapacity
-                            )
-                        )
                     })
+                    .Concat(this.refuelLevels.Select(x => new EdgeDefinition(baseNode, system, x)))
                 )
+                .ToList();
+
+            var edges = definitions
+                .AsParallel()
+                .AsUnordered()
                 .Select(x => this.CreateEdge(x.Node, x.StarSystem, x.Refuel))
                 .Where(x => x != null)
                 .Cast<IEdge>()
                 .ToList();
 
-            return Task.FromResult(results);
+            return Task.FromResult(edges);
         }
 
-        private Edge CreateEdge(Node node, StarSystem system, FuelRange refuel)
+        private Edge? CreateEdge(Node node, StarSystem system, FuelRange? refuel)
         {
             var min = this.CreateEdge(node, node.Fuel.Min, system, refuel?.Min, CreateEdgeType.Mininum);
 
@@ -125,11 +123,11 @@ namespace EliteBuckyball.Application
                 return null;
             }
 
-            if (min.Jumps == 1 && max.Jumps == 1)
+            if (min.Value.Jumps == 1 && max.Value.Jumps == 1)
             {
                 // Allowed
             }
-            else if (min.Jumps > 1 && max.Jumps > 1)
+            else if (min.Value.Jumps > 1 && max.Value.Jumps > 1)
             {
                 // Allowed
             }
@@ -139,8 +137,8 @@ namespace EliteBuckyball.Application
                 return null;
             }
 
-            var distance = Math.Max(min.Distance, max.Distance);
-            var jumps = Math.Max(min.Jumps, max.Jumps);
+            var distance = Math.Max(min.Value.Distance, max.Value.Distance);
+            var jumps = Math.Max(min.Value.Jumps, max.Value.Jumps);
 
             return new Edge
             {
@@ -148,8 +146,8 @@ namespace EliteBuckyball.Application
                 To = this.CreateNode(
                     system,
                     new FuelRange(
-                        min.Fuel,
-                        max.Fuel
+                        min.Value.Fuel,
+                        max.Value.Fuel
                     ),
                     refuel,
                     jumps
@@ -159,7 +157,7 @@ namespace EliteBuckyball.Application
             };
         }
 
-        private Edge CreateEdge(Node node, double fuel, StarSystem system, double? refuel, CreateEdgeType type)
+        private Edge? CreateEdge(Node node, double fuel, StarSystem system, double? refuel, CreateEdgeType type)
         {
             var from = node.StarSystem.Coordinates;
             var to = system.Coordinates;
@@ -267,7 +265,7 @@ namespace EliteBuckyball.Application
                 To = this.CreateNode(
                     system,
                     new FuelRange(fuel, fuel),
-                    refuel.HasValue ? new FuelRange(refuel.Value, refuel.Value) : null,
+                    refuel.HasValue ? new FuelRange(refuel.Value, refuel.Value) : (FuelRange?)null,
                     jumps
                 ),
                 Distance = time,
@@ -309,9 +307,9 @@ namespace EliteBuckyball.Application
         {
             public Node Node;
             public StarSystem StarSystem;
-            public FuelRange Refuel;
+            public FuelRange? Refuel;
 
-            public EdgeDefinition(Node node, StarSystem system, FuelRange refuel)
+            public EdgeDefinition(Node node, StarSystem system, FuelRange? refuel)
             {
                 this.Node = node;
                 this.StarSystem = system;
