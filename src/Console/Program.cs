@@ -25,7 +25,10 @@ namespace EliteBuckyball.ConsoleApp
                 .AddLogging()
                 .AddDbContext<ApplicationDbContext>(options =>
                 {
-                    options.UseMySql(configuration.GetConnectionString("Default"));
+                    options.UseMySql(configuration.GetConnectionString("Default"), b =>
+                    {
+                        b.EnableRetryOnFailure();
+                    });
                 })
                 .AddTransient<INodeHandler, NodeHandler>()
                 .AddTransient<IStarSystemRepository, StarSystemRepository>()
