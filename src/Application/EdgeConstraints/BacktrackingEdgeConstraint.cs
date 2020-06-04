@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace EliteBuckyball.Application
+namespace EliteBuckyball.Application.EdgeConstraints
 {
-    public class BacktrackingEdgeConstraint : IEdgeConstraint
+    public class BacktrackingEdgeConstraint : BaseEdgeConstraint
     {
 
         private Vector3 goal;
@@ -17,7 +17,7 @@ namespace EliteBuckyball.Application
             this.goal = goal.Coordinates;
         }
 
-        public bool IsValid(StarSystem from, StarSystem to)
+        public override bool ValidBefore(StarSystem from, StarSystem to)
         {
             return Vector3.DistanceSquared(to.Coordinates, goal) < Vector3.DistanceSquared(from.Coordinates, goal);
         }

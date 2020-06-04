@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace EliteBuckyball.Application
+namespace EliteBuckyball.Application.EdgeConstraints
 {
-    public class AngleEdgeConstraint : IEdgeConstraint
+    public class AngleEdgeConstraint : BaseEdgeConstraint
     {
 
         private readonly Vector3 goal;
@@ -19,7 +19,7 @@ namespace EliteBuckyball.Application
             this.maxAngle = maxAngle;
         }
 
-        public bool IsValid(StarSystem from, StarSystem to)
+        public override bool ValidBefore(StarSystem from, StarSystem to)
         {
             var v1 = Vector3.Normalize(this.goal - from.Coordinates);
             var v2 = Vector3.Normalize(to.Coordinates - from.Coordinates);
@@ -30,5 +30,6 @@ namespace EliteBuckyball.Application
 
             return angle < this.maxAngle;
         }
+
     }
 }

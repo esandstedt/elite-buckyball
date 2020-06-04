@@ -19,6 +19,7 @@ namespace EliteBuckyball.Application
         private readonly IReadOnlyList<FuelRange> refuelLevels;
         private readonly StarSystem start;
         private readonly StarSystem goal;
+        private readonly bool useFsdBoost;
 
         private readonly double bestJumpRange;
         private readonly double[] jumpRangeCache;
@@ -29,7 +30,8 @@ namespace EliteBuckyball.Application
             Ship ship,
             List<FuelRange> refuelLevels,
             StarSystem start,
-            StarSystem goal)
+            StarSystem goal,
+            bool useFsdBoost)
         {
             this.starSystemRepository = starSystemRepository;
             this.edgeConstraints = edgeConstraints;
@@ -37,7 +39,7 @@ namespace EliteBuckyball.Application
             this.refuelLevels = refuelLevels;
             this.start = start;
             this.goal = goal;
-
+            this.useFsdBoost = useFsdBoost;
             this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
             this.jumpRangeCache = Enumerable.Range(0, (int)(100 * ship.FuelCapacity) + 1)
                 .Select(x => this.ship.GetJumpRange(x / 100.0))
@@ -90,13 +92,24 @@ namespace EliteBuckyball.Application
             }
 
             var results = this.starSystemRepository.GetNeighbors(system, distance)
-                .Where(x => this.edgeConstraints.All(y => y.IsValid(system, x)))
+                .Where(x => this.edgeConstraints.All(y => y.ValidBefore(system, x)))
                 .ToList();
 
             if (Vector3.DistanceSquared(system.Coordinates, this.goal.Coordinates) < distance * distance)
             {
                 results.Add(this.goal);
             }
+
+            /*
+            var maxCount = 500;
+            if (maxCount < results.Count())
+            {
+                results = results
+                    .OrderBy(x => Guid.NewGuid())
+                    .Take(maxCount)
+                    .ToList();
+            }
+             */
 
             this.cache = (system, distance, results);
 
@@ -118,6 +131,7 @@ namespace EliteBuckyball.Application
                     .Concat(this.refuelLevels.Select(x => this.CreateEdge(baseNode, system, x)))
                 )
                 .Where(x => x != null)
+                .Where(x => this.edgeConstraints.All(y => y.ValidAfter(x)))
                 .Cast<IEdge>()
                 .AsSequential();
         }
@@ -167,7 +181,8 @@ namespace EliteBuckyball.Application
                     refuel,
                     jumps
                 ),
-                Distance = distance
+                Distance = distance,
+                Jumps = jumps
             };
         }
 
@@ -186,10 +201,10 @@ namespace EliteBuckyball.Application
             }
             else
             {
-                fstJumpFactor = 1;
+                fstJumpFactor = this.useFsdBoost ? 2 : 1;
             }
 
-            var rstJumpFactor = 1;
+            var rstJumpFactor = this.useFsdBoost ? 2 : 1;
             var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
             var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
 

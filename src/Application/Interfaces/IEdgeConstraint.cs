@@ -7,6 +7,7 @@ namespace EliteBuckyball.Application.Interfaces
 {
     public interface IEdgeConstraint
     {
-        bool IsValid(StarSystem from, StarSystem to);
+        bool ValidBefore(StarSystem from, StarSystem to);
+        bool ValidAfter(IEdge edge);
     }
 }

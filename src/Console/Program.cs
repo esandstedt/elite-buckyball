@@ -1,4 +1,5 @@
 ﻿using EliteBuckyball.Application;
+using EliteBuckyball.Application.EdgeConstraints;
 using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
 using EliteBuckyball.Infrastructure;
@@ -38,7 +39,7 @@ namespace EliteBuckyball.ConsoleApp
 
             var ship = new Ship
             {
-                Name = "DSV Phoenix (Bucky)",
+                Name = "DSV Phoenix (Bucky 2)",
                 DryMass = 482,
                 FuelCapacity = 128,
                 FSD = new FrameShiftDrive
@@ -52,7 +53,6 @@ namespace EliteBuckyball.ConsoleApp
                 FuelScoopRate = 1.245
             };
 
-            /*
             var refuelLevels = new List<FuelRange>
             {
                 new FuelRange(28,36),
@@ -66,18 +66,6 @@ namespace EliteBuckyball.ConsoleApp
                 new FuelRange(108,116),
                 new FuelRange(116,124),
                 new FuelRange(124,128),
-            };
-             */
-
-            var refuelLevels = new List<FuelRange>
-            {
-                new FuelRange(30,34),
-                new FuelRange(46,50),
-                new FuelRange(62,66),
-                new FuelRange(78,82),
-                new FuelRange(94,98),
-                new FuelRange(110,114),
-                new FuelRange(128,128)
             };
 
             /*
@@ -124,21 +112,23 @@ namespace EliteBuckyball.ConsoleApp
             };
              */
 
-            var start = repository.Get("Sol");
-            var goal = repository.Get("Sagittarius A*");
+            var start = repository.Get("3 Capricorni");
+            var goal = repository.Get("Phua Aub QT-W b1-4");
 
             var nodeHandler = new NodeHandler(
                 repository,
                 new List<IEdgeConstraint>
                 {
-                    new MinimumDistanceEdgeConstraint(2 * ship.GetJumpRange()),
-                    new AngleEdgeConstraint(goal, 60),
+                    new MinimumDistanceEdgeConstraint(3 * ship.GetJumpRange()),
+                    new AngleEdgeConstraint(goal, 45),
                     new CylinderEdgeConstraint(start, goal, 2000),
+                    new MaximumJumpsEdgeConstraint(2),
                 },
                 ship,
                 refuelLevels,
                 start,
-                goal
+                goal,
+                true
             );
 
             var tStart = DateTime.UtcNow;

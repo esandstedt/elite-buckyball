@@ -88,7 +88,7 @@ namespace EliteBuckyball.Application
                 }
             }
 
-            return new List<INode>();
+            return this.GenerateRoute(closest);
         }
 
         private void Enqueue(INode node, double g)

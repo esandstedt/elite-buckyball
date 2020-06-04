@@ -5,9 +5,9 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Text;
 
-namespace EliteBuckyball.Application
+namespace EliteBuckyball.Application.EdgeConstraints
 {
-    public class CylinderEdgeConstraint : IEdgeConstraint
+    public class CylinderEdgeConstraint : BaseEdgeConstraint
     {
 
         private readonly Vector3 start;
@@ -21,7 +21,7 @@ namespace EliteBuckyball.Application
             this.radiusSquared = radius * radius;
         }
 
-        public bool IsValid(StarSystem from, StarSystem to)
+        public override bool ValidBefore(StarSystem from, StarSystem to)
         {
             return this.DistanceSquaredFromCenterLine(to.Coordinates) < this.radiusSquared;
         }
