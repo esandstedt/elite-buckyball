@@ -112,6 +112,29 @@ namespace EliteBuckyball.ConsoleApp
             };
              */
 
+            /*
+            var ship = new Ship
+            {
+                Name = "DSV Phoenix (Exploration)",
+                DryMass = 610,
+                FuelCapacity = 128,
+                FSD = new FrameShiftDrive
+                {
+                    FuelPower = 2.6,
+                    FuelMultiplier = 0.012,
+                    MaxFuelPerJump = 8,
+                    OptimisedMass = 2902
+                },
+                GuardianBonus = 10.5,
+                FuelScoopRate = 1.245
+            };
+
+            var refuelLevels = new List<FuelRange>
+            {
+                new FuelRange(96,96)
+            };
+             */
+
             var start = repository.Get("3 Capricorni");
             var goal = repository.Get("Phua Aub QT-W b1-4");
 
@@ -120,7 +143,7 @@ namespace EliteBuckyball.ConsoleApp
                 new List<IEdgeConstraint>
                 {
                     new MinimumDistanceEdgeConstraint(3 * ship.GetJumpRange()),
-                    new AngleEdgeConstraint(goal, 45),
+                    new AngleEdgeConstraint(goal, 60),
                     new CylinderEdgeConstraint(start, goal, 2000),
                     new MaximumJumpsEdgeConstraint(2),
                 },
@@ -128,7 +151,8 @@ namespace EliteBuckyball.ConsoleApp
                 refuelLevels,
                 start,
                 goal,
-                true
+                true,
+                500
             );
 
             var tStart = DateTime.UtcNow;
