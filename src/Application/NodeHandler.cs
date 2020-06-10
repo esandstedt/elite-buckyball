@@ -23,6 +23,7 @@ namespace EliteBuckyball.Application
         private readonly double neighborRange;
 
         private readonly double bestJumpRange;
+        private double[] jumpRangeCache;
 
         public NodeHandler(
             IStarSystemRepository starSystemRepository,
@@ -44,6 +45,9 @@ namespace EliteBuckyball.Application
             this.neighborRange = neighborRange;
 
             this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
+            this.jumpRangeCache = Enumerable.Range(0, (int)(100 * this.ship.FuelCapacity) + 1)
+                .Select(x => this.ship.GetJumpRange(x / 100.0))
+                .ToArray();
         }
 
         public IEnumerable<INode> GetInitialNodes()
@@ -192,7 +196,7 @@ namespace EliteBuckyball.Application
             var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
 
             double fstJumpFactor;
-            var fstJumpRange = this.ship.GetJumpRange(fuel);
+            var fstJumpRange = this.GetJumpRange(fuel);
             if (from.HasNeutron && from.DistanceToNeutron < 100)
             {
                 fstJumpFactor = 4;
@@ -204,7 +208,7 @@ namespace EliteBuckyball.Application
             }
 
             var rstJumpFactor = this.useFsdBoost ? 2 : 1;
-            var rstJumpRange = this.ship.GetJumpRange(this.ship.FuelCapacity);
+            var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
             var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
 
             var jumps = (int)(1 + Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange)));
@@ -296,6 +300,11 @@ namespace EliteBuckyball.Application
             }
         }
 
+        public double GetJumpRange(double fuel)
+        {
+            return this.jumpRangeCache[(int)(100 * fuel)];
+        }
+
         private struct SimpleEdge
         {
 
@@ -320,4 +329,5 @@ namespace EliteBuckyball.Application
         }
 
     }
+
 }

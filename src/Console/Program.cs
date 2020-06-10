@@ -116,8 +116,8 @@ namespace EliteBuckyball.ConsoleApp
             var ship = new Ship
             {
                 Name = "DSV Phoenix (Exploration)",
-                DryMass = 610,
-                FuelCapacity = 128,
+                DryMass = 580,
+                FuelCapacity = 96,
                 FSD = new FrameShiftDrive
                 {
                     FuelPower = 2.6,
