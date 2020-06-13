@@ -11,7 +11,7 @@ namespace EliteBuckyball.Application
     public class NodeHandler : INodeHandler
     {
 
-        private const double TIME_PER_JUMP = 50;
+        private const double TIME_PER_JUMP = 55;
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;

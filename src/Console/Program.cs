@@ -35,124 +35,81 @@ namespace EliteBuckyball.ConsoleApp
                 .AddTransient<IStarSystemRepository, StarSystemRepository>()
                 .BuildServiceProvider();
 
+            var app = new AppSettings();
+            configuration.GetSection("App").Bind(app);
+
             var repository = serviceProvider.GetService<IStarSystemRepository>();
 
             var ship = new Ship
             {
-                Name = "DSV Phoenix (Bucky 2)",
-                DryMass = 482,
-                FuelCapacity = 128,
+                Name = app.Ship.Name,
+                DryMass = app.Ship.DryMass,
+                FuelCapacity = app.Ship.FuelCapacity,
                 FSD = new FrameShiftDrive
                 {
-                    FuelPower = 2.6,
-                    FuelMultiplier = 0.012,
-                    MaxFuelPerJump = 8,
-                    OptimisedMass = 2902
+                    FuelPower = app.Ship.FsdFuelPower,
+                    FuelMultiplier = app.Ship.FsdFuelMultiplier,
+                    MaxFuelPerJump = app.Ship.FsdMaxFuelPerJump,
+                    OptimisedMass = app.Ship.FsdOptimisedMass
                 },
-                GuardianBonus = 10.5,
-                FuelScoopRate = 1.245
+                GuardianBonus = app.Ship.GuardianBonus,
+                FuelScoopRate = app.Ship.FuelScoopRate
             };
 
-            var refuelLevels = new List<FuelRange>
-            {
-                new FuelRange(28,36),
-                new FuelRange(44,52),
-                new FuelRange(60,68),
-                new FuelRange(68,76),
-                new FuelRange(76,84),
-                new FuelRange(84,92),
-                new FuelRange(92,100),
-                new FuelRange(100,108),
-                new FuelRange(108,116),
-                new FuelRange(116,124),
-                new FuelRange(124,128),
-            };
+            var refuelLevels = app.Ship.RefuelLevels
+                .Select(x => new FuelRange(x.Min, x.Max))
+                .ToList();
 
-            /*
-            var ship = new Ship
-            {
-                Name = "BBV Neutrino",
-                DryMass = 34,
-                FuelCapacity = 6,
-                FSD = new FrameShiftDrive
+            var start = repository.Get(app.Start);
+            var goal = repository.Get(app.Goal);
+
+            var edgeConstraints = app.EdgeConstraints
+                .Select<EdgeConstraintSettings, IEdgeConstraint>(x =>
                 {
-                    FuelPower = 2,
-                    FuelMultiplier = 0.012,
-                    MaxFuelPerJump = 1,
-                    OptimisedMass = 140
-                },
-                GuardianBonus = 6.0,
-                FuelScoopRate = 0.075
-            };
+                    if (x.Type == "Angle")
+                    {
+                        return new AngleEdgeConstraint(
+                            goal,
+                            double.Parse(x.Parameters["Angle"])
+                        );
+                    }
+                    else if (x.Type == "Cylinder")
+                    {
+                        return new CylinderEdgeConstraint(
+                            start,
+                            goal,
+                            float.Parse(x.Parameters["Radius"])
+                        );
+                    }
+                    else if (x.Type == "MaximumJumps")
+                    {
+                        return new MaximumJumpsEdgeConstraint(
+                            int.Parse(x.Parameters["Jumps"])
+                        );
+                    }
+                    else if (x.Type == "MinimumDistance")
+                    {
+                        return new MinimumDistanceEdgeConstraint(
+                            double.Parse(x.Parameters["Distance"])
+                        );
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException();
+                    }
+                })
+                .ToList();
 
-            var refuelLevels = new List<FuelRange> { 
-                new FuelRange(6, 6)
-            };
-             */
-
-            /*
-            var ship = new Ship
-            {
-                Name = "DSV Aurora",
-                DryMass = 340,
-                FuelCapacity = 32,
-                FSD = new FrameShiftDrive
-                {
-                    FuelPower = 2.45,
-                    FuelMultiplier = 0.012,
-                    MaxFuelPerJump = 5,
-                    OptimisedMass = 1693
-                },
-                GuardianBonus = 10.5,
-                FuelScoopRate = 0.878
-            };
-
-            var refuelLevels = new List<FuelRange> { 
-                new FuelRange(32,32)
-            };
-             */
-
-            /*
-            var ship = new Ship
-            {
-                Name = "DSV Phoenix (Exploration)",
-                DryMass = 580,
-                FuelCapacity = 96,
-                FSD = new FrameShiftDrive
-                {
-                    FuelPower = 2.6,
-                    FuelMultiplier = 0.012,
-                    MaxFuelPerJump = 8,
-                    OptimisedMass = 2902
-                },
-                GuardianBonus = 10.5,
-                FuelScoopRate = 1.245
-            };
-
-            var refuelLevels = new List<FuelRange>
-            {
-                new FuelRange(96,96)
-            };
-             */
-
-            var start = repository.Get("3 Capricorni");
-            var goal = repository.Get("Phua Aub QT-W b1-4");
 
             var nodeHandler = new NodeHandler(
                 repository,
-                new List<IEdgeConstraint>
-                {
-                    new MinimumDistanceEdgeConstraint(3 * ship.GetJumpRange()),
-                    new AngleEdgeConstraint(goal, 60),
-                    new CylinderEdgeConstraint(start, goal, 2000),
-                    new MaximumJumpsEdgeConstraint(2),
-                },
+                edgeConstraints,
                 ship,
                 refuelLevels,
                 start,
                 goal,
-                true,
-                500
+                app.UseFsdBoost,
+                app.NeighborDistance
             );
 
             var tStart = DateTime.UtcNow;
