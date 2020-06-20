@@ -11,7 +11,7 @@ namespace EliteBuckyball.Application
     public class NodeHandler : INodeHandler
     {
 
-        private const double TIME_PER_JUMP = 55;
+        private const double TIME_PER_JUMP = 50;
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
@@ -241,7 +241,7 @@ namespace EliteBuckyball.Application
 
                     time += this.GetTravelTime(to.DistanceToScoopable);
                     time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
-                    time += 20;
+                    time += 5;
 
                     fuel = refuel.Value;
                 }
@@ -272,7 +272,7 @@ namespace EliteBuckyball.Application
                     (jumps - 2) * this.ship.FSD.MaxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
-                time += 20 * jumps;
+                time += 5 * jumps;
 
                 fuel = Math.Max(0, refuel.Value - this.ship.FSD.MaxFuelPerJump);
             }
