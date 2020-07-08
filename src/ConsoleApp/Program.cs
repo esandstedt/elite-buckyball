@@ -93,6 +93,20 @@ namespace EliteBuckyball.ConsoleApp
                             double.Parse(x.Parameters["Distance"])
                         );
                     }
+                    else if (x.Type == "StartMaximumFuel")
+                    {
+                        return new StartMaximumFuelEdgeConstraint(
+                            start,
+                            double.Parse(x.Parameters["MaxFuel"])
+                        );
+                    }
+                    else if (x.Type == "GoalMinimumFuel")
+                    {
+                        return new GoalMinimumFuelEdgeConstraint(
+                            goal,
+                            double.Parse(x.Parameters["MinFuel"])
+                        );
+                    }
                     else
                     {
                         throw new InvalidOperationException();
