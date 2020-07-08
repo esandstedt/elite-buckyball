@@ -12,6 +12,7 @@ namespace EliteBuckyball.Application
     {
 
         private const double TIME_PER_JUMP = 50;
+        private const double TIME_PER_REFUEL = 0;
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
@@ -241,7 +242,7 @@ namespace EliteBuckyball.Application
 
                     time += this.GetTravelTime(to.DistanceToScoopable);
                     time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
-                    time += 5;
+                    time += TIME_PER_REFUEL;
 
                     fuel = refuel.Value;
                 }
@@ -272,7 +273,7 @@ namespace EliteBuckyball.Application
                     (jumps - 2) * this.ship.FSD.MaxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
-                time += 5 * jumps;
+                time += TIME_PER_REFUEL * jumps;
 
                 fuel = Math.Max(0, refuel.Value - this.ship.FSD.MaxFuelPerJump);
             }
