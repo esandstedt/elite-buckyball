@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace EliteBuckyball.ConsoleApp
+namespace EliteBuckyball.ConsoleApp.GenerateRoute
 {
     public class AppSettings
     {
