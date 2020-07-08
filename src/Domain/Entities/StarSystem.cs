@@ -16,11 +16,11 @@ namespace EliteBuckyball.Domain.Entities
 
         public bool HasNeutron { get; set; }
 
-        public float DistanceToNeutron { get; set; }
+        public int DistanceToNeutron { get; set; }
 
         public bool HasScoopable { get; set; }
 
-        public float DistanceToScoopable { get; set; }
+        public int DistanceToScoopable { get; set; }
 
         public DateTime Date { get; set; }
 

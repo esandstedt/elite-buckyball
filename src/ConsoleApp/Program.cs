@@ -60,8 +60,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 .Select(x => new FuelRange(x.Min, x.Max))
                 .ToList();
 
-            var start = repository.Get(app.Start);
-            var goal = repository.Get(app.Goal);
+            var start = repository.GetByName(app.Start);
+            var goal = repository.GetByName(app.Goal);
 
             var edgeConstraints = app.EdgeConstraints
                 .Select<EdgeConstraintSettings, IEdgeConstraint>(x =>

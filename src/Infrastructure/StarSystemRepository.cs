@@ -23,7 +23,18 @@ namespace EliteBuckyball.Infrastructure
             this.sectors = new Dictionary<(int, int, int), Sector>();
         }
 
-        public StarSystem Get(string name)
+        public StarSystem Get(long id)
+        {
+            var result = this.dbContext.StarSystems.Find(id);
+            if (result != null)
+            {
+                return Convert(result);
+            }
+
+            return null;
+        }
+
+        public StarSystem GetByName(string name)
         {
             var result = this.dbContext.StarSystems.SingleOrDefault(x => x.Name == name);
             if (result != null)
@@ -32,6 +43,20 @@ namespace EliteBuckyball.Infrastructure
             }
 
             return null;
+        }
+
+        public bool Exists(long id)
+        {
+            return this.dbContext.StarSystems.Any(x => x.Id == id);
+        }
+
+        public ISet<long> Exists(IEnumerable<long> ids)
+        {
+            return new HashSet<long>(
+                this.dbContext.StarSystems
+                    .Where(x => ids.Contains(x.Id))
+                    .Select(x => x.Id)
+            );
         }
 
         public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
@@ -78,6 +103,29 @@ namespace EliteBuckyball.Infrastructure
                 DistanceToScoopable = system.DistanceToScoopable ?? default,
                 Date = system.Date ?? default
             };
+        }
+
+        public void Create(StarSystem system)
+        {
+            var entity = new Persistence.Entities.StarSystem
+            {
+                Id = system.Id,
+                Name = system.Name,
+                X = system.Coordinates.X,
+                Y = system.Coordinates.Y,
+                Z = system.Coordinates.Z,
+                SectorX = (int)Math.Floor(system.Coordinates.X / 1000),
+                SectorY = (int)Math.Floor(system.Coordinates.Y / 1000),
+                SectorZ = (int)Math.Floor(system.Coordinates.Z / 1000),
+                Date = system.Date.Date,
+                DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null,
+                DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null,
+            };
+
+            dbContext.Add(entity);
+            dbContext.SaveChanges();
+
+            dbContext.Entry(entity).State = EntityState.Detached;
         }
     }
 
