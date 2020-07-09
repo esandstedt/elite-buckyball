@@ -20,6 +20,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
+                .AddJsonFile("appsettings.ignored.json")
                 .Build();
 
             var serviceProvider = new ServiceCollection()
