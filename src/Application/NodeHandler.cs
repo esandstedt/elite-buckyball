@@ -12,7 +12,6 @@ namespace EliteBuckyball.Application
     {
 
         private const double TIME_PER_JUMP = 50;
-        private const double TIME_PER_REFUEL = 0;
 
         private readonly IStarSystemRepository starSystemRepository;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
@@ -22,6 +21,7 @@ namespace EliteBuckyball.Application
         private readonly StarSystem goal;
         private readonly bool useFsdBoost;
         private readonly double neighborRange;
+        private readonly double extraTimePerRefuel;
 
         private readonly double bestJumpRange;
         private double[] jumpRangeCache;
@@ -34,7 +34,8 @@ namespace EliteBuckyball.Application
             StarSystem start,
             StarSystem goal,
             bool useFsdBoost,
-            double neighborRange)
+            double neighborRange,
+            double extraTimePerRefuel)
         {
             this.starSystemRepository = starSystemRepository;
             this.edgeConstraints = edgeConstraints;
@@ -44,6 +45,7 @@ namespace EliteBuckyball.Application
             this.goal = goal;
             this.useFsdBoost = useFsdBoost;
             this.neighborRange = neighborRange;
+            this.extraTimePerRefuel = extraTimePerRefuel;
 
             this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
             this.jumpRangeCache = Enumerable.Range(0, (int)(100 * this.ship.FuelCapacity) + 1)
@@ -242,7 +244,7 @@ namespace EliteBuckyball.Application
 
                     time += this.GetTravelTime(to.DistanceToScoopable);
                     time += (refuel.Value - fuel) / this.ship.FuelScoopRate;
-                    time += TIME_PER_REFUEL;
+                    time += this.extraTimePerRefuel;
 
                     fuel = refuel.Value;
                 }
@@ -273,7 +275,7 @@ namespace EliteBuckyball.Application
                     (jumps - 2) * this.ship.FSD.MaxFuelPerJump;
 
                 time += fuelToScoop / this.ship.FuelScoopRate;
-                time += TIME_PER_REFUEL * jumps;
+                time += this.extraTimePerRefuel * jumps;
 
                 fuel = Math.Max(0, refuel.Value - this.ship.FSD.MaxFuelPerJump);
             }

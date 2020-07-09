@@ -123,7 +123,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 start,
                 goal,
                 app.UseFsdBoost,
-                app.NeighborDistance
+                app.NeighborDistance,
+                app.ExtraTimePerRefuel
             );
 
             var tStart = DateTime.UtcNow;
