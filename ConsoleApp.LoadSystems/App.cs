@@ -1,5 +1,6 @@
 ﻿using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
+using EliteBuckyball.Infrastructure;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
@@ -45,7 +46,7 @@ namespace ConsoleApp.LoadSystems
 
         private void Handle(List<EdsmSystem> systems)
         {
-            var existingIds = repository.Exists(systems.Select(x => x.Id64.Value));
+            var existingIds = repository.Exists(systems.Select(x => x.Id64.Value).ToList());
 
             foreach (var system in systems)
             {

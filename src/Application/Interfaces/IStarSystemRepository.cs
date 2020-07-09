@@ -15,10 +15,14 @@ namespace EliteBuckyball.Application.Interfaces
 
         bool Exists(long id);
 
-        ISet<long> Exists(IEnumerable<long> ids);
+        ISet<long> Exists(List<long> ids);
 
         IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance);
 
         void Create(StarSystem system);
+
+        void Update(StarSystem system);
+
+        void Update(List<StarSystem> system);
     }
 }

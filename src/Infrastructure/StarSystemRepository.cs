@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EliteBuckyball.Infrastructure
@@ -50,7 +51,7 @@ namespace EliteBuckyball.Infrastructure
             return this.dbContext.StarSystems.Any(x => x.Id == id);
         }
 
-        public ISet<long> Exists(IEnumerable<long> ids)
+        public ISet<long> Exists(List<long> ids)
         {
             return new HashSet<long>(
                 this.dbContext.StarSystems
@@ -126,6 +127,60 @@ namespace EliteBuckyball.Infrastructure
             dbContext.SaveChanges();
 
             dbContext.Entry(entity).State = EntityState.Detached;
+        }
+
+        public void Update(StarSystem system)
+        {
+            var entity = dbContext.StarSystems.Find(system.Id);
+
+            if (entity == null)
+            {
+                throw new InvalidOperationException();
+            }
+
+            Update(entity, system);
+
+            dbContext.SaveChanges();
+
+            dbContext.Entry(entity).State = EntityState.Detached;
+        }
+
+        public void Update(List<StarSystem> systems)
+        {
+            var systemIds = systems.Select(x => x.Id).ToList();
+
+            var entityMap = dbContext.StarSystems
+                .Where(x => systemIds.Contains(x.Id))
+                .ToList()
+                .ToDictionary(x => x.Id);
+
+            foreach (var system in systems)
+            {
+                if (!entityMap.ContainsKey(system.Id))
+                {
+                    throw new InvalidOperationException();
+                }
+
+                var entity = entityMap[system.Id];
+
+                Update(entity, system);
+            }
+
+            dbContext.SaveChanges();
+        }
+
+        private void Update(Persistence.Entities.StarSystem entity, StarSystem system)
+        {
+            entity.Name = system.Name;
+            entity.X = system.Coordinates.X;
+            entity.Y = system.Coordinates.Y;
+            entity.Z = system.Coordinates.Z;
+            entity.SectorX = (int)Math.Floor(system.Coordinates.X / 1000);
+            entity.SectorY = (int)Math.Floor(system.Coordinates.Y / 1000);
+            entity.SectorZ = (int)Math.Floor(system.Coordinates.Z / 1000);
+            entity.Date = system.Date.Date;
+            entity.DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null;
+            entity.DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null;
         }
     }
 

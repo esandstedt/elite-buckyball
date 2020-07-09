@@ -6,7 +6,7 @@ using System.IO.Compression;
 using System.Text;
 using System.Text.Json;
 
-namespace ConsoleApp.LoadSystems
+namespace EliteBuckyball.Infrastructure
 {
     public class DumpFileReader<T> : IEnumerable<T> 
     {
