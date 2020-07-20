@@ -13,6 +13,8 @@ namespace EliteBuckyball.Application
 
         private const double TIME_PER_JUMP = 50;
 
+        private const double JUMPRANGE_CACHE_RESOLUTION = 0.001;
+
         private readonly IStarSystemRepository starSystemRepository;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
         private readonly Ship ship;
@@ -48,8 +50,10 @@ namespace EliteBuckyball.Application
             this.extraTimePerRefuel = extraTimePerRefuel;
 
             this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
-            this.jumpRangeCache = Enumerable.Range(0, (int)(100 * this.ship.FuelCapacity) + 1)
-                .Select(x => this.ship.GetJumpRange(x / 100.0))
+
+            var topFuelLevel = this.refuelLevels.Max(x => x.Max);
+            this.jumpRangeCache = Enumerable.Range(0, (int)(topFuelLevel / JUMPRANGE_CACHE_RESOLUTION) + 1)
+                .Select(x => this.ship.GetJumpRange(JUMPRANGE_CACHE_RESOLUTION * x))
                 .ToArray();
         }
 
@@ -199,7 +203,7 @@ namespace EliteBuckyball.Application
             var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
 
             double fstJumpFactor;
-            var fstJumpRange = this.GetJumpRange(fuel);
+            var fstJumpRange = this.GetJumpRange(Math.Min(fuel, this.ship.FuelCapacity));
             if (from.HasNeutron && from.DistanceToNeutron < 100)
             {
                 fstJumpFactor = 4;
@@ -305,7 +309,7 @@ namespace EliteBuckyball.Application
 
         public double GetJumpRange(double fuel)
         {
-            return this.jumpRangeCache[(int)(100 * fuel)];
+            return this.jumpRangeCache[(int)(fuel / JUMPRANGE_CACHE_RESOLUTION)];
         }
 
         private struct SimpleEdge
