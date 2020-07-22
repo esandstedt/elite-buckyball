@@ -11,7 +11,10 @@ namespace EliteBuckyball.Application
     public class NodeHandler : INodeHandler
     {
 
-        private const double TIME_PER_JUMP = 50;
+        private const double TIME_BASE = 34;
+        private const double TIME_FSD_COOLDOWN = 10;
+        private const double TIME_NEUTRON_BOOST = 16;
+        private const double TIME_SYNTHESIS_BOOST = 20;
 
         private const double JUMPRANGE_CACHE_RESOLUTION = 0.001;
 
@@ -81,7 +84,7 @@ namespace EliteBuckyball.Application
         public double GetShortestDistanceToGoal(INode a)
         {
             var distance = Vector3.Distance(a.StarSystem.Coordinates, this.goal.Coordinates);
-            return TIME_PER_JUMP * distance / (4 * this.bestJumpRange);
+            return (TIME_BASE + TIME_NEUTRON_BOOST) * distance / (4 * this.bestJumpRange);
         }
 
 
@@ -207,20 +210,35 @@ namespace EliteBuckyball.Application
             if (from.HasNeutron && from.DistanceToNeutron < 100)
             {
                 fstJumpFactor = 4;
+                time += TIME_BASE + TIME_NEUTRON_BOOST;
                 time += this.GetTravelTime(from.DistanceToNeutron);
+            }
+            else if (this.useFsdBoost) 
+            {
+                fstJumpFactor = 2;
+                time += TIME_BASE + TIME_SYNTHESIS_BOOST;
             }
             else
             {
-                fstJumpFactor = this.useFsdBoost ? 2 : 1;
+                fstJumpFactor = 1;
+                time += TIME_BASE + TIME_FSD_COOLDOWN;
             }
 
-            var rstJumpFactor = this.useFsdBoost ? 2 : 1;
-            var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
             var rstDistance = Math.Max(distance - (fstJumpFactor * fstJumpRange), 0);
+            var rstJumpRange = this.GetJumpRange(this.ship.FuelCapacity);
+            var rstJumps = 0;
+            if (this.useFsdBoost)
+            {
+                rstJumps = (int)Math.Ceiling(rstDistance / (2 * rstJumpRange));
+                time += rstJumps * (TIME_BASE + TIME_SYNTHESIS_BOOST);
+            }
+            else
+            {
+                rstJumps = (int)Math.Ceiling(rstDistance / rstJumpRange);
+                time += rstJumps * (TIME_BASE + TIME_FSD_COOLDOWN);
+            }
 
-            var jumps = (int)(1 + Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange)));
-
-            time += TIME_PER_JUMP * jumps;
+            var jumps = rstJumps + 1;
 
             if (jumps == 1)
             {
