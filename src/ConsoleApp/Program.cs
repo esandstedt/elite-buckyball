@@ -124,8 +124,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 start,
                 goal,
                 app.UseFsdBoost,
-                app.NeighborDistance,
-                app.ExtraTimePerRefuel
+                app.NeighborDistance
             );
 
             var tStart = DateTime.UtcNow;
@@ -155,33 +154,10 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     Console.WriteLine("    neutron: true");
                 }
 
-                var hasPrimaryScoopable = node.StarSystem.HasScoopable && Math.Abs(node.StarSystem.DistanceToScoopable) < 1e-6;
+                Console.WriteLine("    scoopable: false");
 
-                if (node.Refuel == null)
-                {
-                    if (hasPrimaryScoopable)
-                    {
-                        Console.WriteLine("    scoopable: false");
-                    }
-                }
-                else 
-                {
-                    if (node.StarSystem.HasScoopable)
-                    {
-                        if (node.Jumps == 1)
-                        {
-                            Console.WriteLine("    scoopable: true");
-                        }
-                        else
-                        {
-                            Console.WriteLine("    scoopable: false");
-                        }
-                    }
-
-                    var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
-                    Console.WriteLine("    fuel: {0:0.00}", fuel);
-                }
-                
+                var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
+                Console.WriteLine("    fuel: {0:0.00}", fuel);
             }
         }
     }

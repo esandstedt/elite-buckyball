@@ -46,7 +46,7 @@ namespace EliteBuckyball.Application
             return false;
         }
 
-        public bool Equals(Node that)
+        private bool Equals(Node that)
         {
             return this.Id.Equals(that.Id);
         }

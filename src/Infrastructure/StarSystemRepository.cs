@@ -88,7 +88,7 @@ namespace EliteBuckyball.Infrastructure
                 }
             }
 
-            return sectors.SelectMany(s => s.GetNeighbors(system, distance)).ToList();
+            return sectors.SelectMany(s => s.GetNeighbors(system, distance));
         }
 
         private static StarSystem Convert(Persistence.Entities.StarSystem system)

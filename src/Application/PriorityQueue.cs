@@ -1,40 +1,49 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 
 namespace EliteBuckyball.Application
 {
     public class PriorityQueue<T>
     {
-        private SortedList<double, T> list = new SortedList<double, T>(new DuplicateKeyComparer<double>());
+        private SortedDictionary<double, List<T>> dictionary = new SortedDictionary<double, List<T>>();
 
-        public bool Any() => this.list.Any();
+        public bool Any() => this.dictionary.Any();
 
-        public int Count => this.list.Count;
+        public int Count { get; private set; } = 0;
 
         public (T, double) Dequeue()
         {
-            var pair = this.list.First();
-            this.list.RemoveAt(0);
-            return (pair.Value, pair.Key);
+            this.Count -= 1;
+
+            var pair = this.dictionary.First();
+            if (pair.Value.Count == 1)
+            {
+                this.dictionary.Remove(pair.Key);
+                return (pair.Value[0], pair.Key);
+            }
+            else
+            {
+                var index = pair.Value.Count - 1;
+                var value = pair.Value[index];
+                pair.Value.RemoveAt(index);
+                return (value, pair.Key);
+            }
         }
 
         public void Enqueue(T item, double priority)
         {
-            this.list.Add(priority, item);
-        }
+            this.Count += 1;
 
-        private class DuplicateKeyComparer<TKey> : IComparer<TKey> where TKey : IComparable
-        {
-            public int Compare(TKey x, TKey y)
+            if (this.dictionary.ContainsKey(priority))
             {
-                int result = x.CompareTo(y);
-
-                if (result == 0)
-                    return 1;   // Handle equality as beeing greater
-                else
-                    return result;
+                this.dictionary[priority].Add(item);
+            }
+            else
+            {
+                this.dictionary[priority] = new List<T> { item };
             }
         }
     }

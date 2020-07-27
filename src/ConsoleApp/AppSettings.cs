@@ -12,7 +12,6 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         public List<EdgeConstraintSettings> EdgeConstraints { get; set; }
         public bool UseFsdBoost { get; set; }
         public double NeighborDistance { get; set; }
-        public double ExtraTimePerRefuel { get; set; }
     }
 
     public class ShipSettings
