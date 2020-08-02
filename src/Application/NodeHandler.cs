@@ -11,14 +11,6 @@ namespace EliteBuckyball.Application
     public class NodeHandler : INodeHandler
     {
 
-        private const double TIME_WITCHSPACE = 14;
-        private const double TIME_FSD_CHARGE = 20;
-        private const double TIME_FSD_COOLDOWN = 10;
-        private const double TIME_NEUTRON_BOOST = 13;
-        private const double TIME_SYNTHESIS_BOOST = 20;
-        private const double TIME_TRAVEL_MIN = 5;
-        private const double TIME_PARALLEL_MARGIN = 5;
-
         private const double JUMPRANGE_CACHE_RESOLUTION = 0.001;
 
         private readonly IStarSystemRepository starSystemRepository;
@@ -29,6 +21,8 @@ namespace EliteBuckyball.Application
         private readonly StarSystem goal;
         private readonly bool useFsdBoost;
         private readonly double neighborRange;
+
+        private readonly JumpTime jumpTime;
 
         private readonly double bestJumpRange;
         private double[] jumpRangeCache;
@@ -55,6 +49,8 @@ namespace EliteBuckyball.Application
             this.goal = goal;
             this.useFsdBoost = useFsdBoost;
             this.neighborRange = neighborRange;
+
+            this.jumpTime = new JumpTime(ship);
 
             this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
 
@@ -90,8 +86,7 @@ namespace EliteBuckyball.Application
         public double GetShortestDistanceToGoal(INode a)
         {
             var distance = Vector3.Distance(a.StarSystem.Coordinates, this.goal.Coordinates);
-            var timePerJump = TIME_WITCHSPACE + TIME_TRAVEL_MIN + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
-            return timePerJump * distance / (4 * this.bestJumpRange);
+            return this.jumpTime.ShortestTime * distance / (4 * this.bestJumpRange);
         }
 
         public IEnumerable<IEdge> GetEdges(INode node)
@@ -277,13 +272,13 @@ namespace EliteBuckyball.Application
                         return null;
                     }
 
-                    time += this.GetJumpTime(from, to, fstBoostType, refuel.Value - fuel);
+                    time += this.jumpTime.Get(from, to, fstBoostType, refuel.Value - fuel);
 
                     fuel = refuel.Value;
                 }
                 else
                 {
-                    time += this.GetJumpTime(from, to, fstBoostType, null);
+                    time += this.jumpTime.Get(from, to, fstBoostType, null);
                 }
             }
             else
@@ -300,15 +295,15 @@ namespace EliteBuckyball.Application
                     return null;
                 }
 
-                time += this.GetJumpTime(from, null, fstBoostType, null);
+                time += this.jumpTime.Get(from, null, fstBoostType, null);
 
                 var rstJumpRange = this.GetJumpRange(Math.Min(refuel.Value, this.ship.FuelCapacity));
                 var rstJumpFactor = useFsdBoost ? 2 : 1;
                 var rstBoostType = useFsdBoost ? BoostType.Synthesis : BoostType.None;
                 var rstJumps = (int)Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange));
 
-                time += (rstJumps - 1) * this.GetJumpTime(null, null, rstBoostType, null);
-                time += this.GetJumpTime(null, null, rstBoostType, rstJumps * this.ship.FSD.MaxFuelPerJump + refuel.Value - fuel);
+                time += (rstJumps - 1) * this.jumpTime.Get(null, null, rstBoostType, null);
+                time += this.jumpTime.Get(null, null, rstBoostType, rstJumps * this.ship.FSD.MaxFuelPerJump + refuel.Value - fuel);
 
                 jumps += rstJumps;
 
@@ -324,64 +319,6 @@ namespace EliteBuckyball.Application
                 Refuel = refuel,
                 Jumps = jumps
             };
-        }
-
-        private double GetJumpTime(StarSystem from, StarSystem to, BoostType boost, double? refuel)
-        {
-            var timeFst = TIME_WITCHSPACE;
-
-            if (boost == BoostType.Neutron)
-            {
-                timeFst += this.GetTravelTime(from?.DistanceToNeutron ?? 0);
-                timeFst += TIME_NEUTRON_BOOST;
-            }
-
-            var timeRst = 0.0;
-
-            if (boost == BoostType.None)
-            {
-                timeRst = TIME_FSD_COOLDOWN + TIME_FSD_CHARGE;
-            }
-            else if (boost == BoostType.Synthesis)
-            {
-                timeRst = TIME_SYNTHESIS_BOOST + TIME_FSD_CHARGE;
-            }
-            else if (boost == BoostType.Neutron)
-            {
-                timeRst = TIME_FSD_CHARGE;
-            }
-
-            if (refuel.HasValue)
-            {
-                var timeRefuel = this.GetTravelTime(to?.DistanceToScoopable ?? 0) +
-                    refuel.Value / this.ship.FuelScoopRate;
-
-                var timeForParallel = timeRst + TIME_PARALLEL_MARGIN;
-
-                if (timeRefuel < timeForParallel)
-                {
-                    timeRefuel += TIME_FSD_CHARGE;
-                }
-
-                timeRst = Math.Max(timeRst, timeRefuel);
-            }
-
-            return timeFst + timeRst;
-        }
-
-        private enum BoostType
-        {
-            None,
-            Synthesis,
-            Neutron
-        }
-
-        private double GetTravelTime(double distance)
-        {
-            return Math.Max(
-                TIME_TRAVEL_MIN,
-                12 * Math.Log(Math.Max(1, distance))
-            );
         }
 
         public double GetJumpRange(double fuel)
