@@ -143,21 +143,39 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
             Console.WriteLine();
             Console.WriteLine("Time: {0}", (tEnd - tStart));
 
+
             Console.WriteLine();
             Console.WriteLine("route:");
             foreach (var node in route.Cast<Node>())
             {
-                Console.WriteLine("  - name: {0}", node.StarSystem.Name);
+                var system = node.StarSystem;
 
-                if (node.StarSystem.DistanceToNeutron != 0)
+                Console.WriteLine("  - name: {0}", system.Name);
+
+                if (system.DistanceToNeutron != 0)
                 {
                     Console.WriteLine("    neutron: true");
                 }
 
-                Console.WriteLine("    scoopable: false");
+                if (node.Refuel.HasValue)
+                {
+                    Console.WriteLine("    scoopable: {0}", node.Jumps == 1);
 
-                var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
-                Console.WriteLine("    fuel: {0:0.00}", fuel);
+                    var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
+                    Console.WriteLine("    fuel: {0:0.00}", fuel);
+                }
+                else if (system.HasScoopable && system.DistanceToScoopable == 0)
+                {
+                    Console.WriteLine("    scoopable: {0}", false);
+                }
+
+                /*
+                var debugFuel = (node.Fuel.Min + node.Fuel.Max) / 2;
+                Console.WriteLine("    debug-fuel: {0:0.00}", debugFuel);
+                double? debugRefuel = node.Refuel.HasValue ? (node.Refuel.Value.Min + node.Refuel.Value.Max) / 2 : (double?)null;
+                Console.WriteLine("    debug-refuel: {0}", debugRefuel);
+                Console.WriteLine("    debug-jumps: {0}", node.Jumps);
+                 */
             }
         }
     }

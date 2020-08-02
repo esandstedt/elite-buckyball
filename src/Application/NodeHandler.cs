@@ -2,10 +2,8 @@
 using EliteBuckyball.Domain.Entities;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Tracing;
 using System.Linq;
 using System.Numerics;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading.Tasks;
 
 namespace EliteBuckyball.Application
@@ -13,12 +11,13 @@ namespace EliteBuckyball.Application
     public class NodeHandler : INodeHandler
     {
 
-        private const double TIME_WITCHSPACE = 15;
+        private const double TIME_WITCHSPACE = 14;
         private const double TIME_FSD_CHARGE = 20;
         private const double TIME_FSD_COOLDOWN = 10;
-        private const double TIME_NEUTRON_BOOST = 15 + 2;
+        private const double TIME_NEUTRON_BOOST = 13;
         private const double TIME_SYNTHESIS_BOOST = 20;
-        private const double TIME_REFUEL_EXTRA = 10;
+        private const double TIME_TRAVEL_MIN = 5;
+        private const double TIME_PARALLEL_MARGIN = 5;
 
         private const double JUMPRANGE_CACHE_RESOLUTION = 0.001;
 
@@ -75,8 +74,8 @@ namespace EliteBuckyball.Application
 
         private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange? refuel, int jumps)
         {
-            int min = (int)(4 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
-            int max = (int)(4 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
+            int min = (int)(8 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
+            int max = (int)(8 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
 
             return new Node(
                 (system.Id, min, max),
@@ -91,7 +90,7 @@ namespace EliteBuckyball.Application
         public double GetShortestDistanceToGoal(INode a)
         {
             var distance = Vector3.Distance(a.StarSystem.Coordinates, this.goal.Coordinates);
-            var timePerJump = TIME_WITCHSPACE + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
+            var timePerJump = TIME_WITCHSPACE + TIME_TRAVEL_MIN + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
             return timePerJump * distance / (4 * this.bestJumpRange);
         }
 
@@ -150,7 +149,12 @@ namespace EliteBuckyball.Application
 
             foreach (var level in this.refuelLevels)
             {
-                yield return this.CreateEdge(node, system, level, this.useFsdBoost);
+                yield return this.CreateEdge(node, system, level, false);
+
+                if (this.useFsdBoost)
+                {
+                    yield return this.CreateEdge(node, system, level, true);
+                }
             }
         }
 
@@ -268,18 +272,18 @@ namespace EliteBuckyball.Application
                     }
 
                     // must have scoopable 
-                    if (!from.HasScoopable || 100 < from.DistanceToScoopable)
+                    if (!to.HasScoopable || 100 < to.DistanceToScoopable)
                     {
                         return null;
                     }
 
-                    time += this.GetJumpTime(from, fstBoostType, refuel.Value - fuel);
+                    time += this.GetJumpTime(from, to, fstBoostType, refuel.Value - fuel);
 
                     fuel = refuel.Value;
                 }
                 else
                 {
-                    time += this.GetJumpTime(from, fstBoostType, null);
+                    time += this.GetJumpTime(from, to, fstBoostType, null);
                 }
             }
             else
@@ -296,15 +300,15 @@ namespace EliteBuckyball.Application
                     return null;
                 }
 
-                time += this.GetJumpTime(from, fstBoostType, null);
+                time += this.GetJumpTime(from, null, fstBoostType, null);
 
                 var rstJumpRange = this.GetJumpRange(Math.Min(refuel.Value, this.ship.FuelCapacity));
                 var rstJumpFactor = useFsdBoost ? 2 : 1;
                 var rstBoostType = useFsdBoost ? BoostType.Synthesis : BoostType.None;
                 var rstJumps = (int)Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange));
 
-                time += (rstJumps - 1) * this.GetJumpTime(null, rstBoostType, this.ship.FSD.MaxFuelPerJump);
-                time += this.GetJumpTime(null, rstBoostType, refuel.Value - fuel);
+                time += (rstJumps - 1) * this.GetJumpTime(null, null, rstBoostType, null);
+                time += this.GetJumpTime(null, null, rstBoostType, rstJumps * this.ship.FSD.MaxFuelPerJump + refuel.Value - fuel);
 
                 jumps += rstJumps;
 
@@ -322,13 +326,13 @@ namespace EliteBuckyball.Application
             };
         }
 
-        private double GetJumpTime(StarSystem system, BoostType boost, double? refuel)
+        private double GetJumpTime(StarSystem from, StarSystem to, BoostType boost, double? refuel)
         {
             var timeFst = TIME_WITCHSPACE;
 
             if (boost == BoostType.Neutron)
             {
-                timeFst += this.GetTravelTime(system?.DistanceToNeutron ?? 0);
+                timeFst += this.GetTravelTime(from?.DistanceToNeutron ?? 0);
                 timeFst += TIME_NEUTRON_BOOST;
             }
 
@@ -349,15 +353,10 @@ namespace EliteBuckyball.Application
 
             if (refuel.HasValue)
             {
-                var timeRefuel = this.GetTravelTime(system?.DistanceToScoopable ?? 0) +
-                    refuel.Value / this.ship.FuelScoopRate + 
-                    TIME_REFUEL_EXTRA;
+                var timeRefuel = this.GetTravelTime(to?.DistanceToScoopable ?? 0) +
+                    refuel.Value / this.ship.FuelScoopRate;
 
-                var timeForParallel = TIME_FSD_CHARGE + 5;
-                if (boost == BoostType.Synthesis)
-                {
-                    timeForParallel += TIME_SYNTHESIS_BOOST;
-                }
+                var timeForParallel = timeRst + TIME_PARALLEL_MARGIN;
 
                 if (timeRefuel < timeForParallel)
                 {
@@ -379,14 +378,10 @@ namespace EliteBuckyball.Application
 
         private double GetTravelTime(double distance)
         {
-            if (distance < 1)
-            {
-                return 0;
-            }
-            else
-            {
-                return 12 * Math.Log(distance);
-            }
+            return Math.Max(
+                TIME_TRAVEL_MIN,
+                12 * Math.Log(Math.Max(1, distance))
+            );
         }
 
         public double GetJumpRange(double fuel)

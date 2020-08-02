@@ -42,14 +42,14 @@ namespace EliteBuckyball.Application
             var i = 0;
             while (this.open.Any())
             {
-                i += 1;
-
                 var (current, f) = this.open.Dequeue();
 
                 if (this.f[current] < f)
                 {
                     continue;
                 }
+
+                i += 1;
 
                 var distance = this.nodeHandler.GetShortestDistanceToGoal(current);
 

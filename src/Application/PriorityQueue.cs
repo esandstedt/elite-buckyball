@@ -10,7 +10,7 @@ namespace EliteBuckyball.Application
     {
         private SortedDictionary<double, List<T>> dictionary = new SortedDictionary<double, List<T>>();
 
-        public bool Any() => this.dictionary.Any();
+        public bool Any() => this.Count != 0;
 
         public int Count { get; private set; } = 0;
 
