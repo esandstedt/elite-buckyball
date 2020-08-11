@@ -70,8 +70,8 @@ namespace EliteBuckyball.Application
 
         private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange? refuel, int jumps)
         {
-            int min = (int)(8 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
-            int max = (int)(8 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
+            int min = (int)(4 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
+            int max = (int)(4 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
 
             return new Node(
                 (system.Id, min, max),
@@ -86,7 +86,7 @@ namespace EliteBuckyball.Application
         public double GetShortestDistanceToGoal(INode a)
         {
             var distance = Vector3.Distance(a.StarSystem.Coordinates, this.goal.Coordinates);
-            return this.jumpTime.ShortestTime * distance / (4 * this.bestJumpRange);
+            return JumpTime.NeutronWithoutRefuel * distance / (4 * this.bestJumpRange);
         }
 
         public IEnumerable<IEdge> GetEdges(INode node)
@@ -280,6 +280,8 @@ namespace EliteBuckyball.Application
                 {
                     time += this.jumpTime.Get(from, to, fstBoostType, null);
                 }
+
+
             }
             else
             {

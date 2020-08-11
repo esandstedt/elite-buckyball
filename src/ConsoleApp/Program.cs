@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace EliteBuckyball.ConsoleApp.GenerateRoute
 {
@@ -115,7 +114,6 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 })
                 .ToList();
 
-
             var nodeHandler = new NodeHandler(
                 repository,
                 edgeConstraints,
@@ -127,9 +125,11 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 app.NeighborDistance
             );
 
+            var pathfinder = new Pathfinder(nodeHandler);
+
             var tStart = DateTime.UtcNow;
 
-            var route = new Pathfinder(nodeHandler).Invoke();
+            var route = pathfinder.Invoke();
 
             var tEnd = DateTime.UtcNow;
 
@@ -146,6 +146,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
             Console.WriteLine();
             Console.WriteLine("route:");
+            INode prev = null;
             foreach (var node in route.Cast<Node>())
             {
                 var system = node.StarSystem;
@@ -169,13 +170,12 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     Console.WriteLine("    scoopable: {0}", false);
                 }
 
-                /*
-                var debugFuel = (node.Fuel.Min + node.Fuel.Max) / 2;
-                Console.WriteLine("    debug-fuel: {0:0.00}", debugFuel);
-                double? debugRefuel = node.Refuel.HasValue ? (node.Refuel.Value.Min + node.Refuel.Value.Max) / 2 : (double?)null;
-                Console.WriteLine("    debug-refuel: {0}", debugRefuel);
-                Console.WriteLine("    debug-jumps: {0}", node.Jumps);
-                 */
+                if (prev != null)
+                {
+                    Console.WriteLine("    time: {0:0}", pathfinder.GetDistance(prev, node));
+                }
+
+                prev = node;
             }
         }
     }

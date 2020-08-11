@@ -114,5 +114,15 @@ namespace EliteBuckyball.Application
             return result;
         }
 
+        public double GetDistance(INode from, INode to)
+        {
+            if (!this.cameFrom[to].Equals(from))
+            {
+                throw new ArgumentException();
+            }
+
+            return this.g[to] - this.g[from];
+        }
+
     }
 }
