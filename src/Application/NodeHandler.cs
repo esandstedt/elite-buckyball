@@ -21,6 +21,7 @@ namespace EliteBuckyball.Application
         private readonly StarSystem goal;
         private readonly bool useFsdBoost;
         private readonly double neighborRange;
+        private readonly double minimumFuelLevel;
 
         private readonly JumpTime jumpTime;
 
@@ -49,6 +50,7 @@ namespace EliteBuckyball.Application
             this.goal = goal;
             this.useFsdBoost = useFsdBoost;
             this.neighborRange = neighborRange;
+            this.minimumFuelLevel = this.ship.FSD.MaxFuelPerJump / 4;
 
             this.jumpTime = new JumpTime(ship);
 
@@ -243,21 +245,6 @@ namespace EliteBuckyball.Application
 
             if (distance < fstDistance)
             {
-                fuel -= this.ship.GetFuelCost(fuel, distance / fstJumpFactor);
-            }
-            else
-            {
-                fuel -= this.ship.FSD.MaxFuelPerJump;
-            }
-
-            if (fuel < 1)
-            {
-                return null;
-            }
-
-            var rstDistance = distance - fstDistance;
-            if (rstDistance < 0)
-            {
                 if (refuel.HasValue)
                 {
                     // must be above current fuel
@@ -281,10 +268,16 @@ namespace EliteBuckyball.Application
                     time += this.jumpTime.Get(from, to, fstBoostType, null);
                 }
 
+                fuel -= this.ship.GetFuelCost(fuel, distance / fstJumpFactor);
 
+                if (fuel < this.minimumFuelLevel)
+                {
+                    return null;
+                }
             }
             else
             {
+
                 // must refuel 
                 if (!refuel.HasValue)
                 {
@@ -297,8 +290,16 @@ namespace EliteBuckyball.Application
                     return null;
                 }
 
+                // must have enough fuel to make first jump
+                if (fuel < this.ship.FSD.MaxFuelPerJump + this.minimumFuelLevel)
+                {
+                    return null;
+                }
+
+
                 time += this.jumpTime.Get(from, null, fstBoostType, null);
 
+                var rstDistance = distance - fstDistance;
                 var rstJumpRange = this.GetJumpRange(Math.Min(refuel.Value, this.ship.FuelCapacity));
                 var rstJumpFactor = useFsdBoost ? 2 : 1;
                 var rstBoostType = useFsdBoost ? BoostType.Synthesis : BoostType.None;

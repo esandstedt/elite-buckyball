@@ -162,8 +162,16 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 {
                     Console.WriteLine("    scoopable: {0}", node.Jumps == 1);
 
-                    var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
-                    Console.WriteLine("    fuel: {0:0.00}", fuel);
+                    if (node.Jumps < 2)
+                    {
+                        var fuel = (node.Refuel.Value.Min + node.Refuel.Value.Max) / 2;
+                        Console.WriteLine("    fuel: {0:0.00}", fuel);
+                    }
+                    else
+                    {
+                        var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
+                        Console.WriteLine("    fuel: {0:0.00}", fuel);
+                    }
                 }
                 else if (system.HasScoopable && system.DistanceToScoopable == 0)
                 {
