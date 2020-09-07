@@ -1,6 +1,7 @@
 ﻿using EliteBuckyball.Domain.Entities;
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +19,8 @@ namespace EliteBuckyball.Application.Interfaces
         ISet<long> Exists(List<long> ids);
 
         IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance);
+
+        IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance);
 
         void Create(StarSystem system);
 

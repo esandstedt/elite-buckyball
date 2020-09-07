@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace EliteBuckyball.ConsoleApp.GenerateRoute
@@ -22,6 +21,9 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 .AddJsonFile("appsettings.ignored.json")
                 .Build();
 
+            var app = new AppSettings();
+            configuration.GetSection("App").Bind(app);
+
             var serviceProvider = new ServiceCollection()
                 .AddLogging()
                 .AddDbContext<ApplicationDbContext>(options =>
@@ -31,14 +33,17 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                         b.EnableRetryOnFailure();
                     });
                 })
-                .AddTransient<INodeHandler, NodeHandler>()
-                .AddTransient<IStarSystemRepository, StarSystemRepository>()
                 .BuildServiceProvider();
 
-            var app = new AppSettings();
-            configuration.GetSection("App").Bind(app);
+            var dbContext = serviceProvider.GetService<ApplicationDbContext>();
 
-            var repository = serviceProvider.GetService<IStarSystemRepository>();
+            var repository = new StarSystemRepository(
+                dbContext,
+                new StarSystemRepository.Options
+                {
+                    Mode = app.Mode == AppMode.Neutron ? StarSystemRepository.Mode.Neutron : StarSystemRepository.Mode.Scoopable
+                }
+            );
 
             var ship = new Ship
             {
@@ -93,18 +98,24 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                             double.Parse(x.Parameters["Distance"])
                         );
                     }
-                    else if (x.Type == "StartMaximumFuel")
+                    else if (x.Type == "FuelRestriction")
                     {
-                        return new StartMaximumFuelEdgeConstraint(
-                            start,
-                            double.Parse(x.Parameters["MaxFuel"])
+                        var min = x.Parameters["Min"];
+                        var max = x.Parameters["Max"];
+
+                        return new FuelRestrictionEdgeConstraint(
+                            repository.GetByName(x.Parameters["System"]),
+                            string.IsNullOrEmpty(min) ? (double?)null : double.Parse(min),
+                            string.IsNullOrEmpty(max) ? (double?)null : double.Parse(max)
                         );
                     }
-                    else if (x.Type == "GoalMinimumFuel")
+                    else if (x.Type == "Exclude")
                     {
-                        return new GoalMinimumFuelEdgeConstraint(
-                            goal,
-                            double.Parse(x.Parameters["MinFuel"])
+                        return new ExcludeEdgeConstraint(
+                            x.Parameters["Names"]
+                                .Split(';')
+                                .Select(y => y.Trim())
+                                .ToList()
                         );
                     }
                     else
@@ -121,15 +132,41 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 refuelLevels,
                 start,
                 goal,
-                app.UseFsdBoost,
-                app.NeighborDistance
+                new NodeHandler.Options
+                {
+                    UseFsdBoost = app.UseFsdBoost,
+                    MultiJumpRangeFactor = app.MultiJumpRangeFactor,
+                    NeighborRangeMin = (app.Mode == AppMode.Neutron ? 6 : app.UseFsdBoost ? 4 : 2) * ship.GetJumpRange(ship.FSD.MaxFuelPerJump),
+                    NeighborRangeMax = 5000,
+                    NeighborRangeMultiplier = 2,
+                    NeighborCountMin = 10,
+                    NeighborCountMax = 1000,
+                }
             );
 
             var pathfinder = new Pathfinder(nodeHandler);
 
             var tStart = DateTime.UtcNow;
 
-            var route = pathfinder.Invoke();
+            var route = pathfinder.Invoke()
+                .Cast<Node>()
+                .ToList();
+
+            repository.Clear();
+
+            route = new RefuelStarFinder(
+                new StarSystemRepository(
+                    dbContext,
+                    new StarSystemRepository.Options
+                    {
+                        Mode = StarSystemRepository.Mode.Scoopable
+                    }
+                ),
+                ship,
+                app.UseFsdBoost
+            )
+                .Invoke(route)
+                .ToList();
 
             var tEnd = DateTime.UtcNow;
 
@@ -146,44 +183,52 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
             Console.WriteLine();
             Console.WriteLine("route:");
-            INode prev = null;
-            foreach (var node in route.Cast<Node>())
+            for (var i = 0; i < route.Count; i++) 
             {
+                var prev = 0 < i ? route[i - 1] : default;
+                var node = route[i];
+                
                 var system = node.StarSystem;
 
                 Console.WriteLine("  - name: {0}", system.Name);
+
+                if (system.Name.Equals("???"))
+                {
+                    Console.WriteLine("    x: {0:0}", system.Coordinates.X);
+                    Console.WriteLine("    y: {0:0}", system.Coordinates.Y);
+                    Console.WriteLine("    z: {0:0}", system.Coordinates.Z);
+                }
 
                 if (system.DistanceToNeutron != 0)
                 {
                     Console.WriteLine("    neutron: true");
                 }
 
-                if (node.Refuel.HasValue)
+                if (node.Jumps == 0)
                 {
-                    Console.WriteLine("    scoopable: {0}", node.Jumps == 1);
-
-                    if (node.Jumps < 2)
-                    {
-                        var fuel = (node.Refuel.Value.Min + node.Refuel.Value.Max) / 2;
-                        Console.WriteLine("    fuel: {0:0.00}", fuel);
-                    }
-                    else
-                    {
-                        var fuel = (node.Fuel.Min + node.Fuel.Max) / 2;
-                        Console.WriteLine("    fuel: {0:0.00}", fuel);
-                    }
+                    Console.WriteLine("    fuel: {0:0.00}", node.Fuel.Avg);
+                }
+                //if (prev.Fuel.Avg < node.Fuel.Avg)
+                else if (node.Refuel.HasValue && node.Jumps == 1)
+                {
+                    Console.WriteLine("    scoopable: true");
+                    Console.WriteLine("    fuel: {0:0.00}", node.Fuel.Avg);
                 }
                 else if (system.HasScoopable && system.DistanceToScoopable == 0)
                 {
-                    Console.WriteLine("    scoopable: {0}", false);
+                    Console.WriteLine("    scoopable: false");
                 }
 
-                if (prev != null)
+                if (!system.HasNeutron && app.UseFsdBoost)
                 {
-                    Console.WriteLine("    time: {0:0}", pathfinder.GetDistance(prev, node));
+                    Console.WriteLine("    boost: true");
                 }
 
-                prev = node;
+                if (i < route.Count - 1)
+                {
+                    //Console.WriteLine("    jumps: {0}", node.Jumps);
+                    //Console.WriteLine("    time: {0:0}", pathfinder.GetDistance(node, route[i+1]));
+                }
             }
         }
     }

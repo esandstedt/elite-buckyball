@@ -15,12 +15,28 @@ namespace EliteBuckyball.Infrastructure
     public class StarSystemRepository : IStarSystemRepository
     {
 
+        public enum Mode
+        {
+            All,
+            Neutron,
+            Scoopable
+        }
+
+        public class Options
+        {
+            public Mode Mode { get; set; }
+        }
+
         private readonly ApplicationDbContext dbContext;
+        private readonly Mode mode;
         private readonly Dictionary<(int, int, int), Sector> sectors;
 
-        public StarSystemRepository(ApplicationDbContext dbContext)
+        public StarSystemRepository(
+            ApplicationDbContext dbContext,
+            Options options)
         {
             this.dbContext = dbContext;
+            this.mode = options.Mode;
             this.sectors = new Dictionary<(int, int, int), Sector>();
         }
 
@@ -62,12 +78,17 @@ namespace EliteBuckyball.Infrastructure
 
         public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
         {
-            var minSectorX = (int)Math.Floor((system.Coordinates.X - distance) / 1000);
-            var maxSectorX = (int)Math.Floor((system.Coordinates.X + distance) / 1000);
-            var minSectorY = (int)Math.Floor((system.Coordinates.Y - distance) / 1000);
-            var maxSectorY = (int)Math.Floor((system.Coordinates.Y + distance) / 1000);
-            var minSectorZ = (int)Math.Floor((system.Coordinates.Z - distance) / 1000);
-            var maxSectorZ = (int)Math.Floor((system.Coordinates.Z + distance) / 1000);
+            return this.GetNeighbors(system.Coordinates, distance);
+        }
+
+        public IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance)
+        {
+            var minSectorX = (int)Math.Floor((coordinate.X - distance) / 1000);
+            var maxSectorX = (int)Math.Floor((coordinate.X + distance) / 1000);
+            var minSectorY = (int)Math.Floor((coordinate.Y - distance) / 1000);
+            var maxSectorY = (int)Math.Floor((coordinate.Y + distance) / 1000);
+            var minSectorZ = (int)Math.Floor((coordinate.Z - distance) / 1000);
+            var maxSectorZ = (int)Math.Floor((coordinate.Z + distance) / 1000);
 
             var sectors = new List<Sector>();
 
@@ -80,7 +101,7 @@ namespace EliteBuckyball.Infrastructure
                         var key = (x, y, z);
                         if (!this.sectors.ContainsKey(key))
                         {
-                            this.sectors[key] = new Sector(this.dbContext, x, y, z);
+                            this.sectors[key] = new Sector(this.dbContext, this.mode, x, y, z);
                         }
 
                         sectors.Add(this.sectors[key]);
@@ -88,7 +109,7 @@ namespace EliteBuckyball.Infrastructure
                 }
             }
 
-            return sectors.SelectMany(s => s.GetNeighbors(system, distance));
+            return sectors.SelectMany(s => s.GetNeighbors(coordinate, distance));
         }
 
         private static StarSystem Convert(Persistence.Entities.StarSystem system)
@@ -182,45 +203,79 @@ namespace EliteBuckyball.Infrastructure
             entity.DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null;
             entity.DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null;
         }
-    }
 
-    public class Sector
-    {
-
-        private List<StarSystem> list;
-
-        public Sector(ApplicationDbContext dbContext, int x, int y, int z)
+        public void Clear()
         {
-            this.list = dbContext.StarSystems
-                .Where(s =>
-                    s.DistanceToNeutron.HasValue &&
-                    s.DistanceToNeutron.Value < 100 &&
-                    s.SectorX == x &&
-                    s.SectorY == y &&
-                    s.SectorZ == z
-                )
-                .Select(Convert)
-                .ToList();
+            this.sectors.Clear();
         }
 
-        public IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance)
+        private class Sector
         {
-            return this.list.Where(x => Vector3.DistanceSquared(system.Coordinates, x.Coordinates) < distance * distance);
-        }
 
-        private static StarSystem Convert(Persistence.Entities.StarSystem system)
-        {
-            return new StarSystem
+            private readonly List<StarSystem> list;
+
+            public Sector(ApplicationDbContext dbContext, Mode mode, int x, int y, int z)
             {
-                Id = system.Id,
-                Name = system.Name,
-                Coordinates = new Vector3(system.X, system.Y, system.Z),
-                HasNeutron = system.DistanceToNeutron.HasValue,
-                DistanceToNeutron = system.DistanceToNeutron ?? default,
-                HasScoopable = system.DistanceToScoopable.HasValue,
-                DistanceToScoopable = system.DistanceToScoopable ?? default,
-                Date = system.Date ?? default
-            };
+                if (mode == Mode.All)
+                {
+                    this.list = dbContext.StarSystems
+                        .Where(s =>
+                            s.SectorX == x &&
+                            s.SectorY == y &&
+                            s.SectorZ == z
+                        )
+                        .Select(Convert)
+                        .ToList();
+                }
+                else if (mode == Mode.Neutron)
+                {
+                    this.list = dbContext.StarSystems
+                        .Where(s =>
+                            s.DistanceToNeutron.HasValue && s.DistanceToNeutron.Value < 100 &&
+                            s.SectorX == x &&
+                            s.SectorY == y &&
+                            s.SectorZ == z
+                        )
+                        .Select(Convert)
+                        .ToList();
+                }
+                else if (mode == Mode.Scoopable)
+                {
+                    this.list = dbContext.StarSystems
+                        .Where(s =>
+                            s.DistanceToScoopable.HasValue && s.DistanceToScoopable.Value < 100 &&
+                            s.SectorX == x &&
+                            s.SectorY == y &&
+                            s.SectorZ == z
+                        )
+                        .Select(Convert)
+                        .ToList();
+                }
+                else
+                {
+                    throw new InvalidOperationException();
+                }
+            }
+
+            public IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance)
+            {
+                return this.list.Where(x => Vector3.DistanceSquared(coordinate, x.Coordinates) < distance * distance);
+            }
+
+            private static StarSystem Convert(Persistence.Entities.StarSystem system)
+            {
+                return new StarSystem
+                {
+                    Id = system.Id,
+                    Name = system.Name,
+                    Coordinates = new Vector3(system.X, system.Y, system.Z),
+                    HasNeutron = system.DistanceToNeutron.HasValue,
+                    DistanceToNeutron = system.DistanceToNeutron ?? default,
+                    HasScoopable = system.DistanceToScoopable.HasValue,
+                    DistanceToScoopable = system.DistanceToScoopable ?? default,
+                    Date = system.Date ?? default
+                };
+            }
         }
     }
 }

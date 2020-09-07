@@ -10,23 +10,26 @@ namespace EliteBuckyball.Application
     {
 
         public object Id { get; }
-
         public StarSystem StarSystem { get; }
-
         public bool IsGoal { get; }
-
         public FuelRange Fuel { get; }
 
-        public FuelRange? Refuel { get; }
-
+        public FuelRange? Refuel { get; set; }
         public int Jumps { get; }
 
-        public Node(object id, StarSystem system, bool isGoal, FuelRange fuel, FuelRange? refuel, int jumps)
+        public Node(
+            object id,
+            StarSystem system,
+            bool isGoal,
+            FuelRange fuel,
+            FuelRange? refuel,
+            int jumps)
         {
             this.Id = id;
             this.StarSystem = system;
             this.IsGoal = isGoal;
             this.Fuel = fuel;
+
             this.Refuel = refuel;
             this.Jumps = jumps;
         }

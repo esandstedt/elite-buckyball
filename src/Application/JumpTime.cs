@@ -11,11 +11,11 @@ namespace EliteBuckyball.Application
         private const double TIME_WITCHSPACE = 14;
         private const double TIME_FSD_CHARGE = 20;
         private const double TIME_FSD_COOLDOWN = 10;
-        private const double TIME_NEUTRON_BOOST = 12;
+        private const double TIME_NEUTRON_BOOST = 8; 
         private const double TIME_SYNTHESIS_BOOST = 20;
-        private const double TIME_TRAVEL_ZERO = 6;
-        private const double TIME_TRAVEL_MIN = 15;
-        private const double TIME_PARALLEL_MARGIN = 0;
+        private const double TIME_TRAVEL_ZERO = 10;
+        private const double TIME_TRAVEL_MIN = 24;
+        private const double TIME_REFUEL_TRAVEL = 14;
         private const double TIME_GALAXY_MAP = 8;
 
         public const double NeutronWithoutRefuel = TIME_WITCHSPACE + TIME_TRAVEL_ZERO + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
@@ -31,8 +31,8 @@ namespace EliteBuckyball.Application
 
         public double Get(StarSystem from, StarSystem to, BoostType boost, double? refuel)
         {
-            var fromDistanceToNeutron = from?.DistanceToNeutron ?? 0;
-            var toDistanceToScoopable = to?.DistanceToScoopable ?? 0;
+            var distanceToNeutron = from?.DistanceToNeutron ?? 0;
+            var distanceToScoopable = from?.DistanceToScoopable ?? 0;
 
             if (!refuel.HasValue)
             {
@@ -43,7 +43,7 @@ namespace EliteBuckyball.Application
                         return NormalWithoutRefuel;
                     }
                     case BoostType.Neutron:
-                    if (fromDistanceToNeutron == 0)
+                    if (distanceToNeutron == 0)
                     {
                         return NeutronWithoutRefuel;
                     }
@@ -75,7 +75,7 @@ namespace EliteBuckyball.Application
             }
             else if (boost == BoostType.Neutron)
             {
-                timeFst += this.GetSupercruiseTime(fromDistanceToNeutron);
+                timeFst += this.GetSupercruiseTime(distanceToNeutron);
                 timeFst += TIME_NEUTRON_BOOST;
 
                 timeRst = TIME_FSD_CHARGE;
@@ -83,23 +83,19 @@ namespace EliteBuckyball.Application
 
             if (refuel.HasValue)
             {
-                var timeRefuel = refuel.Value / this.ship.FuelScoopRate;
+                var timeRefuelScoop = refuel.Value / this.ship.FuelScoopRate;
+                var timeRefuelParallel = TIME_GALAXY_MAP + TIME_REFUEL_TRAVEL + TIME_FSD_CHARGE;
 
-                var timeRefuelFull = TIME_GALAXY_MAP +
-                    this.GetSupercruiseTime(toDistanceToScoopable) +
-                    timeRefuel;
-
-                if (timeRefuel < TIME_FSD_CHARGE || 
-                    timeRefuelFull < timeRst + TIME_PARALLEL_MARGIN)
+                var timeRefuelFinal = this.GetSupercruiseTime(distanceToScoopable) + timeRefuelScoop;
+                if (timeRefuelScoop < timeRefuelParallel)
                 {
-                    timeRefuelFull += TIME_FSD_CHARGE;
+                    timeRefuelFinal += TIME_FSD_CHARGE;
                 }
 
-                timeRst = Math.Max(timeRst, timeRefuelFull);
+                timeRst = Math.Max(timeRst, timeRefuelFinal);
             }
 
             return timeFst + timeRst;
-
         }
 
         private double GetSupercruiseTime(double distance)

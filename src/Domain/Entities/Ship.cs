@@ -19,7 +19,7 @@ namespace EliteBuckyball.Domain.Entities
 
         public double GetJumpRange(double? fuel = null)
         {
-            fuel = fuel ?? this.FuelCapacity;
+            fuel = Math.Min(fuel ?? this.FuelCapacity, this.FuelCapacity);
             return this.GetRange(fuel.Value, this.GetBoostedFuelMultiplier(fuel.Value));
         }
 
@@ -37,7 +37,7 @@ namespace EliteBuckyball.Domain.Entities
 
         private double GetRange(double fuel, double? fuelMultiplier = null)
         {
-            fuelMultiplier = fuelMultiplier ?? this.FSD.FuelMultiplier;
+            fuelMultiplier ??= this.FSD.FuelMultiplier;
 
             var maxFuel = Math.Min(this.FSD.MaxFuelPerJump, fuel);
             var totalMass = this.DryMass + fuel;
