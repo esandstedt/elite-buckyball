@@ -14,7 +14,7 @@ namespace EliteBuckyball.Application
         private const double TIME_NEUTRON_BOOST = 8; 
         private const double TIME_SYNTHESIS_BOOST = 20;
         private const double TIME_TRAVEL_ZERO = 10;
-        private const double TIME_TRAVEL_MIN = 24;
+        private const double TIME_TRAVEL_MIN = 20;
         private const double TIME_REFUEL_TRAVEL = 14;
         private const double TIME_GALAXY_MAP = 8;
 

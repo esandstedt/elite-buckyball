@@ -58,8 +58,7 @@ namespace EliteBuckyball.Application
             this.goal = goal;
             this.options = options;
 
-            //this.minimumFuelLevel = ship.FSD.MaxFuelPerJump / 4;
-            this.minimumFuelLevel = 0;
+            this.minimumFuelLevel = ship.FSD.MaxFuelPerJump / 16;
 
             this.jumpTime = new JumpTime(ship);
 
@@ -81,11 +80,8 @@ namespace EliteBuckyball.Application
 
         private Node CreateNode(StarSystem system, FuelRange fuel, FuelRange? refuel, int jumps)
         {
-            int min = (int)(4 * fuel.Min / this.ship.FSD.MaxFuelPerJump);
-            int max = (int)(4 * fuel.Max / this.ship.FSD.MaxFuelPerJump);
-
             return new Node(
-                (system.Id, min, max),
+                (system.Id, this.GetNodeFuelId(fuel.Min), this.GetNodeFuelId(fuel.Max)),
                 system,
                 system.Equals(this.goal),
                 fuel,
@@ -93,6 +89,27 @@ namespace EliteBuckyball.Application
                 jumps
             );
         }
+
+        private int GetNodeFuelId(double fuel)
+        {
+            // Higher resolution when the tank is empty.
+
+            var id = (int)(16 * fuel / this.ship.FSD.MaxFuelPerJump);
+
+            if (fuel < this.ship.FSD.MaxFuelPerJump)
+            {
+                return id;
+            }
+            else if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
+            {
+                return id - id % 2;
+            }
+            else 
+            {
+                return id - id % 4;
+            }
+        }
+
 
         public double GetShortestDistanceToGoal(INode a)
         {
