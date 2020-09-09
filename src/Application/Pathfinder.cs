@@ -66,7 +66,7 @@ namespace EliteBuckyball.Application
                         TimeSpan.FromSeconds((int)this.g[closest]),
                         TimeSpan.FromSeconds((int)closestDistance),
                         TimeSpan.FromSeconds((int)this.f[current]),
-                        current.Id
+                        current
                     );
                 }
 
