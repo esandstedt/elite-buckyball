@@ -62,7 +62,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
             };
 
             var refuelLevels = app.Ship.RefuelLevels
-                .Select(x => new FuelRange(x.Min, x.Max))
+                .Select(x => new RefuelRange(x.Type, new FuelRange(x.Min, x.Max)))
                 .ToList();
 
             var start = repository.GetByName(app.Start);

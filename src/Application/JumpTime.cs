@@ -29,12 +29,12 @@ namespace EliteBuckyball.Application
             this.ship = ship;
         }
 
-        public double Get(StarSystem from, StarSystem to, BoostType boost, double? refuel)
+        public double? Get(StarSystem from, StarSystem to, BoostType boost, string refuelType, double? refuelLevel)
         {
             var distanceToNeutron = from?.DistanceToNeutron ?? 0;
             var distanceToScoopable = from?.DistanceToScoopable ?? 0;
 
-            if (!refuel.HasValue)
+            if (refuelType == null)
             {
                 switch (boost)
                 {
@@ -81,18 +81,29 @@ namespace EliteBuckyball.Application
                 timeRst = TIME_FSD_CHARGE;
             }
 
-            if (refuel.HasValue)
+            if (refuelType == RefuelRange.TYPE_DEFAULT)
             {
-                var timeRefuelScoop = refuel.Value / this.ship.FuelScoopRate;
+                var timeRefuelScoop = refuelLevel.Value / this.ship.FuelScoopRate;
+
+                var timeRefuel = this.GetSupercruiseTime(distanceToScoopable) +
+                    timeRefuelScoop + 
+                    TIME_FSD_CHARGE;
+
+                timeRst = Math.Max(timeRst, timeRefuel);
+            }
+            else if (refuelType == RefuelRange.TYPE_HEATSINK)
+            {
+                var timeRefuelScoop = refuelLevel.Value / this.ship.FuelScoopRate;
                 var timeRefuelParallel = TIME_GALAXY_MAP + TIME_REFUEL_TRAVEL + TIME_FSD_CHARGE;
 
-                var timeRefuelFinal = this.GetSupercruiseTime(distanceToScoopable) + timeRefuelScoop;
                 if (timeRefuelScoop < timeRefuelParallel)
                 {
-                    timeRefuelFinal += TIME_FSD_CHARGE;
+                    return null;
                 }
 
-                timeRst = Math.Max(timeRst, timeRefuelFinal);
+                var timeRefuel = this.GetSupercruiseTime(distanceToScoopable) + timeRefuelScoop;
+
+                timeRst = Math.Max(timeRst, timeRefuel);
             }
 
             return timeFst + timeRst;
