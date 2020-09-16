@@ -97,11 +97,11 @@ namespace EliteBuckyball.Application
 
             var id = (int)(16 * fuel / this.ship.FSD.MaxFuelPerJump);
 
-            if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
+            if (fuel < 1 * this.ship.FSD.MaxFuelPerJump)
             {
                 return id;
             }
-            else if (fuel < 4 * this.ship.FSD.MaxFuelPerJump)
+            else if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
             {
                 return id - id % 2;
             }
