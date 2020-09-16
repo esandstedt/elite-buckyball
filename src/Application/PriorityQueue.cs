@@ -8,20 +8,35 @@ namespace EliteBuckyball.Application
 {
     public class PriorityQueue<T>
     {
-        private SortedDictionary<double, List<T>> dictionary = new SortedDictionary<double, List<T>>();
+        private SortedDictionary<double, List<T>> queue = new SortedDictionary<double, List<T>>();
+        private Dictionary<T, double> dictionary = new Dictionary<T, double>();
 
         public bool Any() => this.Count != 0;
 
-        public int Count { get; private set; } = 0;
+        public int Count  => this.dictionary.Count;
 
         public (T, double) Dequeue()
         {
-            this.Count -= 1;
+            while (this.queue.Any())
+            {
+                var (item, priority) = this.DequeueFromQueue();
+                if (this.dictionary.ContainsKey(item) && 
+                    this.dictionary[item].Equals(priority))
+                {
+                    this.dictionary.Remove(item);
+                    return (item, priority);
+                }
+            }
 
-            var pair = this.dictionary.First();
+            throw new InvalidOperationException("Queue is empty.");
+        }
+
+        private (T, double) DequeueFromQueue()
+        {
+            var pair = this.queue.First();
             if (pair.Value.Count == 1)
             {
-                this.dictionary.Remove(pair.Key);
+                this.queue.Remove(pair.Key);
                 return (pair.Value[0], pair.Key);
             }
             else
@@ -35,15 +50,23 @@ namespace EliteBuckyball.Application
 
         public void Enqueue(T item, double priority)
         {
-            this.Count += 1;
 
-            if (this.dictionary.ContainsKey(priority))
+            if (this.dictionary.ContainsKey(item))
             {
-                this.dictionary[priority].Add(item);
+                this.dictionary[item] = Math.Min(this.dictionary[item], priority);
             }
             else
             {
-                this.dictionary[priority] = new List<T> { item };
+                this.dictionary[item] = priority;
+            }
+
+            if (this.queue.ContainsKey(priority))
+            {
+                this.queue[priority].Add(item);
+            }
+            else
+            {
+                this.queue[priority] = new List<T> { item };
             }
         }
     }

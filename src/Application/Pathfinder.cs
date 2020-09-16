@@ -36,18 +36,15 @@ namespace EliteBuckyball.Application
                 this.Enqueue(node, 0);
             }
 
-            double closestDistance = double.MaxValue;
+
+            var tStart = DateTime.Now;
+            var closestDistance = double.MaxValue;
             INode closest = null;
 
             var i = 0;
             while (this.open.Any())
             {
                 var (current, f) = this.open.Dequeue();
-
-                if (this.f[current] < f)
-                {
-                    continue;
-                }
 
                 i += 1;
 
@@ -59,7 +56,7 @@ namespace EliteBuckyball.Application
                     closestDistance = distance;
 
                     Console.WriteLine("{0} {1,8} {2,8} {3,8} | {4,6} {5,6} | {6,6} {7}",
-                        DateTime.Now.ToLongTimeString(),
+                        (DateTime.Now - tStart).ToString(@"hh\:mm\:ss"),
                         i,
                         this.open.Count,
                         this.cameFrom.Count,

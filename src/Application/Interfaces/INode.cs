@@ -5,7 +5,7 @@ using System.Text;
 
 namespace EliteBuckyball.Application.Interfaces
 {
-    public interface INode
+    public interface INode 
     {
 
         public object Id { get; }
