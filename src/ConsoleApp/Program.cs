@@ -66,6 +66,12 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 .ToList();
 
             var start = repository.GetByName(app.Start);
+            if (app.NeutronBoostedAtStart)
+            {
+                start.HasNeutron = true;
+                start.DistanceToNeutron = 0;
+            }
+
             var goal = repository.GetByName(app.Goal);
 
             var edgeConstraints = app.EdgeConstraints
