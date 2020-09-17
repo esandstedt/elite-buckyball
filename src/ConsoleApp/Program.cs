@@ -215,7 +215,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     Console.WriteLine("    fuel: {0:0.00}", node.Fuel.Avg);
                 }
                 //if (prev.Fuel.Avg < node.Fuel.Avg)
-                else if (node.Refuel.HasValue && node.Jumps == 1)
+                else if (node.Refuel != null && node.Jumps == 1)
                 {
                     Console.WriteLine("    scoopable: true");
                     Console.WriteLine("    fuel: {0:0.00}", node.Fuel.Avg);

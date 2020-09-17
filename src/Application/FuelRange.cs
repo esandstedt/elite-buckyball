@@ -4,13 +4,12 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
-    public struct FuelRange
+    public class FuelRange
     {
-        public double Min { get; set; }
+        public readonly double Min;
+        public readonly double Max;
 
-        public double Max { get; set; }
-
-        public double Avg => (this.Min + this.Max) / 2;
+        public double Avg => (this.Min + this.Max) / 2; 
 
         public FuelRange(double min, double max)
         {

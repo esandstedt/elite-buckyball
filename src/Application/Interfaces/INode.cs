@@ -7,12 +7,8 @@ namespace EliteBuckyball.Application.Interfaces
 {
     public interface INode 
     {
-
         public object Id { get; }
-
         public StarSystem StarSystem { get; }
-
         public bool IsGoal { get; }
-
     }
 }

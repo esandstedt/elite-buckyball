@@ -6,15 +6,14 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
-    public struct Node : INode
+    public class Node : INode
     {
-
         public object Id { get; }
         public StarSystem StarSystem { get; }
         public bool IsGoal { get; }
         public FuelRange Fuel { get; }
 
-        public RefuelRange? Refuel { get; set; }
+        public RefuelRange Refuel { get; set; }
         public int Jumps { get; }
 
         public Node(
@@ -22,7 +21,7 @@ namespace EliteBuckyball.Application
             StarSystem system,
             bool isGoal,
             FuelRange fuel,
-            RefuelRange? refuel,
+            RefuelRange refuel,
             int jumps)
         {
             this.Id = id;

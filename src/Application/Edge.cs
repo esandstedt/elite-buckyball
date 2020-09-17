@@ -5,16 +5,19 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
-    public struct Edge : IEdge
+    public class Edge : IEdge
     {
+        public INode From { get; }
+        public INode To { get; }
+        public double Distance { get; }
+        public int Jumps { get; }
 
-        public INode From { get; set; }
-
-        public INode To { get; set; }
-
-        public double Distance { get; set; }
-
-        public int Jumps { get; set; }
-
+        public Edge(INode from, INode to, double distance, int jumps)
+        {
+            this.From = from;
+            this.To = to;
+            this.Distance = distance;
+            this.Jumps = jumps;
+        }
     }
 }

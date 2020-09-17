@@ -70,8 +70,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 Guid.NewGuid(),
                 candidate,
                 false,
-                to.Refuel.Value.Fuel,
-                to.Refuel.Value,
+                to.Refuel.Fuel,
+                to.Refuel,
                 1
             );
 
@@ -143,8 +143,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         {
             return this.CanMakeJump(from.StarSystem, candidate, from.Fuel.Min) &&
                 this.CanMakeJump(from.StarSystem, candidate, from.Fuel.Max) &&
-                this.CanMakeJump(candidate, to.StarSystem, to.Refuel.Value.Fuel.Min) &&
-                this.CanMakeJump(candidate, to.StarSystem, to.Refuel.Value.Fuel.Max);
+                this.CanMakeJump(candidate, to.StarSystem, to.Refuel.Fuel.Min) &&
+                this.CanMakeJump(candidate, to.StarSystem, to.Refuel.Fuel.Max);
         }
 
         private bool CanMakeJump(StarSystem from, StarSystem to, double fuel)

@@ -91,11 +91,11 @@ namespace EliteBuckyball.Application
             );
         }
 
-        private int GetNodeFuelId(double fuel)
+        private byte GetNodeFuelId(double fuel)
         {
             // Higher resolution when the tank is empty.
 
-            var id = (int)(16 * fuel / this.ship.FSD.MaxFuelPerJump);
+            var id = (byte)(16 * fuel / this.ship.FSD.MaxFuelPerJump);
 
             if (fuel < 1 * this.ship.FSD.MaxFuelPerJump)
             {
@@ -103,11 +103,11 @@ namespace EliteBuckyball.Application
             }
             else if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
             {
-                return id - id % 2;
+                return (byte)(id - id % 2);
             }
             else 
             {
-                return id - id % 4;
+                return (byte)(id - id % 4);
             }
         }
 
@@ -242,10 +242,9 @@ namespace EliteBuckyball.Application
             var distance = Math.Max(min.Value.Distance, max.Value.Distance);
             var jumps = Math.Max(min.Value.Jumps, max.Value.Jumps);
 
-            return new Edge
-            {
-                From = node,
-                To = this.CreateNode(
+            return new Edge(
+                node,
+                this.CreateNode(
                     system,
                     new FuelRange(
                         min.Value.Fuel,
@@ -254,9 +253,9 @@ namespace EliteBuckyball.Application
                     refuel,
                     jumps
                 ),
-                Distance = distance,
-                Jumps = jumps
-            };
+                distance,
+                jumps
+            );
         }
 
         private SimpleEdge? CreateEdge(StarSystem from, StarSystem to, double fuel, string refuelType, double? refuelLevel, bool useFsdBoost)
