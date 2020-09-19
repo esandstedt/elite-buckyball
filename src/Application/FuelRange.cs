@@ -6,15 +6,15 @@ namespace EliteBuckyball.Application
 {
     public class FuelRange
     {
-        public readonly double Min;
-        public readonly double Max;
+        public readonly float Min;
+        public readonly float Max;
 
-        public double Avg => (this.Min + this.Max) / 2; 
+        public float Avg => (this.Min + this.Max) / 2; 
 
         public FuelRange(double min, double max)
         {
-            this.Min = min;
-            this.Max = max;
+            this.Min = (float)min;
+            this.Max = (float)max;
         }
     }
 }

@@ -4,18 +4,22 @@ using System.Text;
 
 namespace EliteBuckyball.Application
 {
+    public enum RefuelType
+    {
+        None,
+        Initial,
+        Default,
+        Heatsink
+    }
+
     public class RefuelRange
     {
-        public static readonly string TYPE_INITIAL = "Initial";
-        public static readonly string TYPE_DEFAULT = "Default";
-        public static readonly string TYPE_HEATSINK = "Heatsink";
-
-        public readonly string Type;
+        public readonly RefuelType Type;
         public readonly FuelRange Fuel;
 
         public RefuelRange(string type, FuelRange fuel)
         {
-            this.Type = type;
+            this.Type = (RefuelType)Enum.Parse(typeof(RefuelType), type, true);
             this.Fuel = fuel;
         }
     }

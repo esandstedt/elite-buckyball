@@ -69,17 +69,17 @@ namespace EliteBuckyball.Application
                 .Select(x => this.ship.GetJumpRange(JUMPRANGE_CACHE_RESOLUTION * x))
                 .ToArray();
 
-            this.neighborsCache = new Dictionary<long, List<StarSystem>>(10000000);
+            this.neighborsCache = new Dictionary<long, List<StarSystem>>();
         }
 
         public IEnumerable<INode> GetInitialNodes()
         {
             return this.refuelLevels
-                .Where(x => x.Type == RefuelRange.TYPE_INITIAL)
+                .Where(x => x.Type == RefuelType.Initial)
                 .Select(x => (INode)this.CreateNode(this.start, x.Fuel, null, 0));
         }
 
-        private Node CreateNode(StarSystem system, FuelRange fuel, RefuelRange? refuel, int jumps)
+        private Node CreateNode(StarSystem system, FuelRange fuel, RefuelRange refuel, int jumps)
         {
             return new Node(
                 (system.Id, this.GetNodeFuelId(fuel.Min), this.GetNodeFuelId(fuel.Max)),
@@ -95,22 +95,17 @@ namespace EliteBuckyball.Application
         {
             // Higher resolution when the tank is empty.
 
-            var id = (byte)(16 * fuel / this.ship.FSD.MaxFuelPerJump);
+            var id = 16 * fuel / this.ship.FSD.MaxFuelPerJump;
 
-            if (fuel < 1 * this.ship.FSD.MaxFuelPerJump)
+            if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
             {
-                return id;
-            }
-            else if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
-            {
-                return (byte)(id - id % 2);
+                return (byte)id;
             }
             else 
             {
-                return (byte)(id - id % 4);
+                return (byte)(id - id % 2);
             }
         }
-
 
         public double GetShortestDistanceToGoal(INode a)
         {
@@ -132,7 +127,6 @@ namespace EliteBuckyball.Application
                 .Cast<IEdge>()
                 .AsSequential();
         }
-
 
         private List<StarSystem> GetNeighborsCached(StarSystem system)
         {
@@ -182,26 +176,26 @@ namespace EliteBuckyball.Application
                 .ToList();
         }
 
-        private IEnumerable<Edge?> CreateEdges(Node node, StarSystem system)
+        private IEnumerable<Edge> CreateEdges(Node node, StarSystem system)
         {
             yield return this.CreateEdge(node, system, null, this.options.UseFsdBoost);
 
             if (node.StarSystem != this.start)
             {
-                foreach (var level in this.refuelLevels.Where(x => x.Type != RefuelRange.TYPE_INITIAL))
+                foreach (var level in this.refuelLevels.Where(x => x.Type != RefuelType.Initial))
                 {
                     yield return this.CreateEdge(node, system, level, this.options.UseFsdBoost);
                 }
             }
         }
 
-        private Edge? CreateEdge(Node node, StarSystem system, RefuelRange? refuel, bool useFsdBoost)
+        private Edge CreateEdge(Node node, StarSystem system, RefuelRange refuel, bool useFsdBoost)
         {
             var min = this.CreateEdge(
                 node.StarSystem,
                 system,
                 node.Fuel.Min,
-                refuel?.Type,
+                refuel?.Type ?? RefuelType.None,
                 refuel?.Fuel.Min,
                 useFsdBoost
             );
@@ -215,7 +209,7 @@ namespace EliteBuckyball.Application
                 node.StarSystem,
                 system,
                 node.Fuel.Max,
-                refuel?.Type,
+                refuel?.Type ?? RefuelType.None,
                 refuel?.Fuel.Max,
                 useFsdBoost
             );
@@ -258,7 +252,7 @@ namespace EliteBuckyball.Application
             );
         }
 
-        private SimpleEdge? CreateEdge(StarSystem from, StarSystem to, double fuel, string refuelType, double? refuelLevel, bool useFsdBoost)
+        private SimpleEdge? CreateEdge(StarSystem from, StarSystem to, double fuel, RefuelType refuelType, double? refuelLevel, bool useFsdBoost)
         {
             if (this.CanCompleteInSingleJump(from, to, refuelLevel ?? fuel, useFsdBoost))
             {
@@ -293,7 +287,7 @@ namespace EliteBuckyball.Application
             return distance < jumpFactor * jumpRange;
         }
 
-        private SimpleEdge? GetSingleJump(StarSystem from, StarSystem to, double fuel, string refuelType, double? refuelLevel, bool useFsdBoost)
+        private SimpleEdge? GetSingleJump(StarSystem from, StarSystem to, double fuel, RefuelType refuelType, double? refuelLevel, bool useFsdBoost)
         {
             double jumpFactor;
             BoostType boostType;
@@ -315,7 +309,7 @@ namespace EliteBuckyball.Application
 
             double? time;
 
-            if (refuelType != null)
+            if (refuelType != RefuelType.None)
             {
                 // must be above current fuel
                 if (refuelLevel.Value < fuel)
@@ -335,7 +329,7 @@ namespace EliteBuckyball.Application
             }
             else
             {
-                time = this.jumpTime.Get(from, to, boostType, null, null).Value;
+                time = this.jumpTime.Get(from, to, boostType, RefuelType.None, null).Value;
             }
 
             if (!time.HasValue)
@@ -362,7 +356,7 @@ namespace EliteBuckyball.Application
             };
         }
 
-        private SimpleEdge? GetMultiJump(StarSystem from, StarSystem to, double fuel, string refuelType, double? refuelLevel, bool useFsdBoost)
+        private SimpleEdge? GetMultiJump(StarSystem from, StarSystem to, double fuel, RefuelType refuelType, double? refuelLevel, bool useFsdBoost)
         {
 
             var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
@@ -394,7 +388,7 @@ namespace EliteBuckyball.Application
             }
 
             // must refuel 
-            if (refuelType == null)
+            if (refuelType == RefuelType.None)
             {
                 return null;
             }
@@ -417,8 +411,8 @@ namespace EliteBuckyball.Application
             var rstBoostType = useFsdBoost ? BoostType.Synthesis : BoostType.None;
             var rstJumps = (int)Math.Ceiling(rstDistance / (rstJumpFactor * rstJumpRange));
 
-            var timeFst = this.jumpTime.Get(from, null, fstBoostType, null, null);
-            var timeRst = this.jumpTime.Get(null, null, rstBoostType, null, null);
+            var timeFst = this.jumpTime.Get(from, null, fstBoostType, RefuelType.None, null);
+            var timeRst = this.jumpTime.Get(null, null, rstBoostType, RefuelType.None, null);
             var timeRstRefuel = this.jumpTime.Get(null, null, rstBoostType, refuelType, rstJumps * this.ship.FSD.MaxFuelPerJump + refuelLevel.Value - fuel);
 
             if (!timeFst.HasValue || !timeRst.HasValue || !timeRstRefuel.HasValue)

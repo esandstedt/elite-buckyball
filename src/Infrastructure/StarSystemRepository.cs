@@ -243,7 +243,7 @@ namespace EliteBuckyball.Infrastructure
                 {
                     this.list = dbContext.StarSystems
                         .Where(s =>
-                            s.DistanceToScoopable.HasValue && s.DistanceToScoopable.Value < 100 &&
+                            s.DistanceToScoopable.HasValue && s.DistanceToScoopable.Value == 0 &&
                             s.SectorX == x &&
                             s.SectorY == y &&
                             s.SectorZ == z
