@@ -14,7 +14,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static void Main()
         {
             var configuration = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json")
@@ -41,7 +41,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 dbContext,
                 new StarSystemRepository.Options
                 {
-                    Mode = app.Mode == AppMode.Neutron ? StarSystemRepository.Mode.Neutron : StarSystemRepository.Mode.Scoopable
+                    Mode = StarSystemRepository.Mode.Neutron 
                 }
             );
 
@@ -142,7 +142,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 {
                     UseFsdBoost = app.UseFsdBoost,
                     MultiJumpRangeFactor = app.MultiJumpRangeFactor,
-                    NeighborRangeMin = (app.Mode == AppMode.Neutron ? 6 : app.UseFsdBoost ? 4 : 2) * ship.GetJumpRange(ship.FSD.MaxFuelPerJump),
+                    NeighborRangeMin = Math.Max(500, 6 * ship.GetJumpRange(ship.FSD.MaxFuelPerJump)),
                     NeighborRangeMax = 5000,
                     NeighborRangeMultiplier = 2,
                     NeighborCountMin = 10,

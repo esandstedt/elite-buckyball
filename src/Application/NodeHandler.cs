@@ -82,7 +82,8 @@ namespace EliteBuckyball.Application
         private Node CreateNode(StarSystem system, FuelRange fuel, RefuelRange refuel, int jumps)
         {
             return new Node(
-                (system.Id, this.GetNodeFuelId(fuel.Min), this.GetNodeFuelId(fuel.Max)),
+                //(system.Id, this.GetNodeFuelId(fuel.Min), this.GetNodeFuelId(fuel.Max)),
+                (system.Id, this.GetNodeFuelId(fuel.Avg)),
                 system,
                 system.Equals(this.goal),
                 fuel,
@@ -91,20 +92,26 @@ namespace EliteBuckyball.Application
             );
         }
 
-        private byte GetNodeFuelId(double fuel)
+        private ushort GetNodeFuelId(double fuel)
         {
+            var resolution = 16;
+
             // Higher resolution when the tank is empty.
 
-            var id = 16 * fuel / this.ship.FSD.MaxFuelPerJump;
+            var id = resolution * fuel / this.ship.FSD.MaxFuelPerJump;
 
-            if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
+            if (fuel < 1 * this.ship.FSD.MaxFuelPerJump)
             {
-                return (byte)id;
+                return (ushort)id;
+            }
+            else if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
+            {
+                return (ushort)(id - id % (resolution / 2));
             }
             else 
             {
-                return (byte)(id - id % 2);
-            }
+                return (ushort)(id - id % (resolution / 4));
+            };
         }
 
         public double GetShortestDistanceToGoal(INode a)
@@ -180,12 +187,9 @@ namespace EliteBuckyball.Application
         {
             yield return this.CreateEdge(node, system, null, this.options.UseFsdBoost);
 
-            if (node.StarSystem != this.start)
+            foreach (var level in this.refuelLevels.Where(x => x.Type != RefuelType.Initial))
             {
-                foreach (var level in this.refuelLevels.Where(x => x.Type != RefuelType.Initial))
-                {
-                    yield return this.CreateEdge(node, system, level, this.options.UseFsdBoost);
-                }
+                yield return this.CreateEdge(node, system, level, this.options.UseFsdBoost);
             }
         }
 
@@ -311,6 +315,12 @@ namespace EliteBuckyball.Application
 
             if (refuelType != RefuelType.None)
             {
+                // cannot be start system
+                if (from == this.start)
+                {
+                    return null;
+                }
+
                 // must be above current fuel
                 if (refuelLevel.Value < fuel)
                 {
@@ -441,24 +451,11 @@ namespace EliteBuckyball.Application
 
         private struct SimpleEdge
         {
-
             public StarSystem From { get; set; }
-
             public StarSystem To { get; set; }
-
             public double Fuel { get; set; }
-
             public double Distance { get; set; }
-
-
             public int Jumps { get; set; }
-
-        }
-
-        private enum CreateEdgeType
-        {
-            Mininum,
-            Maximum
         }
 
     }

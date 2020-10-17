@@ -219,6 +219,7 @@ namespace EliteBuckyball.Infrastructure
                 if (mode == Mode.All)
                 {
                     this.list = dbContext.StarSystems
+                        .AsNoTracking()
                         .Where(s =>
                             s.SectorX == x &&
                             s.SectorY == y &&
@@ -230,6 +231,7 @@ namespace EliteBuckyball.Infrastructure
                 else if (mode == Mode.Neutron)
                 {
                     this.list = dbContext.StarSystems
+                        .AsNoTracking()
                         .Where(s =>
                             s.DistanceToNeutron.HasValue && s.DistanceToNeutron.Value < 100 &&
                             s.SectorX == x &&
@@ -242,6 +244,7 @@ namespace EliteBuckyball.Infrastructure
                 else if (mode == Mode.Scoopable)
                 {
                     this.list = dbContext.StarSystems
+                        .AsNoTracking()
                         .Where(s =>
                             s.DistanceToScoopable.HasValue && s.DistanceToScoopable.Value == 0 &&
                             s.SectorX == x &&

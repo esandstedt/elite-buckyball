@@ -4,15 +4,8 @@ using System.Text;
 
 namespace EliteBuckyball.ConsoleApp.GenerateRoute
 {
-    public enum AppMode
-    {
-        Neutron,
-        Scoopable
-    }
-
     public class AppSettings
     {
-        public AppMode Mode { get; set; }
         public ShipSettings Ship { get; set; }
         public string Start { get; set; }
         public string Goal { get; set; }

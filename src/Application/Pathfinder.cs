@@ -14,10 +14,10 @@ namespace EliteBuckyball.Application
 
         private readonly INodeHandler nodeHandler;
 
-        private Dictionary<INode, double> g;
-        private Dictionary<INode, double> f;
-        private Dictionary<INode, INode> cameFrom;
-        private PriorityQueue<INode> open;
+        private readonly Dictionary<INode, double> g;
+        private readonly Dictionary<INode, double> f;
+        private readonly Dictionary<INode, INode> cameFrom;
+        private readonly PriorityQueue<INode> open;
 
         public Pathfinder(INodeHandler nodeHandler)
         {
@@ -68,7 +68,8 @@ namespace EliteBuckyball.Application
                 }
 
                 /*
-                Console.WriteLine("{0,8} {1,8} {2,8} | {3,6} {4,6} | {5,6} {6,6} {7,6}   {8}",
+                Console.WriteLine("{0} {1,8} {2,8} {3,8} | {4,6} {5,6} | {6,6} {7,6} {8,6}   {9}",
+                    (DateTime.Now - tStart).ToString(@"hh\:mm\:ss"),
                     i,
                     this.open.Count,
                     this.cameFrom.Count,
