@@ -205,7 +205,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     Console.WriteLine("    z: {0:0}", system.Coordinates.Z);
                 }
 
-                if (system.DistanceToNeutron != 0)
+                if (system.HasNeutron && system.DistanceToNeutron != 0)
                 {
                     Console.WriteLine("    neutron: true");
                 }
