@@ -121,6 +121,11 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                             x.Parameters["Names"]
                                 .Split(';')
                                 .Select(y => y.Trim())
+                                .Where(y => !string.IsNullOrEmpty(y))
+                                .Select(y => {
+                                    var parts = y.Split(",");
+                                    return (parts[0], parts[1]);
+                                })
                                 .ToList()
                         );
                     }
