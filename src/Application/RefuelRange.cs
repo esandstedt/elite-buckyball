@@ -15,12 +15,14 @@ namespace EliteBuckyball.Application
     public class RefuelRange
     {
         public readonly RefuelType Type;
-        public readonly FuelRange Fuel;
+        public readonly double? FuelMin;
+        public readonly double? FuelMax;
 
-        public RefuelRange(string type, FuelRange fuel)
+        public RefuelRange(string type, double? fuelMin, double? fuelMax)
         {
             this.Type = (RefuelType)Enum.Parse(typeof(RefuelType), type, true);
-            this.Fuel = fuel;
+            this.FuelMin = fuelMin;
+            this.FuelMax = fuelMax;
         }
     }
 }

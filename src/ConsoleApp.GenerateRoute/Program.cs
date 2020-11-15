@@ -62,7 +62,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
             };
 
             var refuelLevels = app.Ship.RefuelLevels
-                .Select(x => new RefuelRange(x.Type, new FuelRange(x.Min, x.Max)))
+                .Select(x => new RefuelRange(x.Type, x.Min, x.Max))
                 .ToList();
 
             var start = repository.GetByName(app.Start);
@@ -212,13 +212,13 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
                 if (node.Jumps == 0)
                 {
-                    Console.WriteLine("    fuel: {0:0.00}", node.Fuel.Avg);
+                    Console.WriteLine("    fuel: {0:0.00}", node.FuelAvg);
                 }
                 //if (prev.Fuel.Avg < node.Fuel.Avg)
-                else if (node.Refuel != null && node.Jumps == 1)
+                else if (node.RefuelType != RefuelType.None && node.Jumps == 1)
                 {
                     Console.WriteLine("    scoopable: true");
-                    Console.WriteLine("    fuel: {0:0.00}", node.Fuel.Avg);
+                    Console.WriteLine("    fuel: {0:0.00}", node.FuelAvg);
                 }
                 else if (system.HasScoopable && system.DistanceToScoopable == 0)
                 {

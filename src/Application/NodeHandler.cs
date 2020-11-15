@@ -64,7 +64,7 @@ namespace EliteBuckyball.Application
 
             this.bestJumpRange = this.ship.GetJumpRange(ship.FSD.MaxFuelPerJump);
 
-            var topFuelLevel = this.refuelLevels.Max(x => x.Fuel.Max);
+            var topFuelLevel = this.refuelLevels.Max(x => x.FuelMax);
             this.jumpRangeCache = Enumerable.Range(0, (int)(topFuelLevel / JUMPRANGE_CACHE_RESOLUTION) + 1)
                 .Select(x => this.ship.GetJumpRange(JUMPRANGE_CACHE_RESOLUTION * x))
                 .ToArray();
@@ -76,18 +76,38 @@ namespace EliteBuckyball.Application
         {
             return this.refuelLevels
                 .Where(x => x.Type == RefuelType.Initial)
-                .Select(x => (INode)this.CreateNode(this.start, x.Fuel, null, 0));
+                .Select(x => this.CreateNode(
+                    this.start,
+                    x.FuelMin.Value,
+                    x.FuelMax.Value,
+                    RefuelType.None,
+                    null,
+                    null,
+                    0
+                ))
+                .Cast<INode>();
         }
 
-        private Node CreateNode(StarSystem system, FuelRange fuel, RefuelRange refuel, int jumps)
+        private Node CreateNode(
+            StarSystem system,
+            double fuelMin,
+            double fuelMax,
+            RefuelType refuelType,
+            double? refuelMin,
+            double? refuelMax,
+            int jumps)
         {
+            var fuelAvg = (fuelMin + fuelMax) / 2.0;
+
             return new Node(
-                //(system.Id, this.GetNodeFuelId(fuel.Min), this.GetNodeFuelId(fuel.Max)),
-                (system.Id, this.GetNodeFuelId(fuel.Avg)),
+                (system.Id, this.GetNodeFuelId(fuelAvg)),
                 system,
                 system.Equals(this.goal),
-                fuel,
-                refuel,
+                fuelMin,
+                fuelMax,
+                refuelType,
+                refuelMin,
+                refuelMax,
                 jumps
             );
         }
@@ -100,11 +120,11 @@ namespace EliteBuckyball.Application
 
             var id = resolution * fuel / this.ship.FSD.MaxFuelPerJump;
 
-            if (fuel < 1 * this.ship.FSD.MaxFuelPerJump)
+            if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
             {
                 return (ushort)id;
             }
-            else if (fuel < 2 * this.ship.FSD.MaxFuelPerJump)
+            else if (fuel < 4 * this.ship.FSD.MaxFuelPerJump)
             {
                 return (ushort)(id - id % (resolution / 2));
             }
@@ -185,22 +205,36 @@ namespace EliteBuckyball.Application
 
         private IEnumerable<Edge> CreateEdges(Node node, StarSystem system)
         {
-            yield return this.CreateEdge(node, system, null, this.options.UseFsdBoost);
+            yield return this.CreateEdge(
+                node,
+                system,
+                RefuelType.None,
+                null,
+                null,
+                this.options.UseFsdBoost
+            );
 
             foreach (var level in this.refuelLevels.Where(x => x.Type != RefuelType.Initial))
             {
-                yield return this.CreateEdge(node, system, level, this.options.UseFsdBoost);
+                yield return this.CreateEdge(
+                    node,
+                    system,
+                    level.Type,
+                    level.FuelMin,
+                    level.FuelMax,
+                    this.options.UseFsdBoost
+                );
             }
         }
 
-        private Edge CreateEdge(Node node, StarSystem system, RefuelRange refuel, bool useFsdBoost)
+        private Edge CreateEdge(Node node, StarSystem system, RefuelType refuelType, double? refuelMin, double? refuelMax, bool useFsdBoost)
         {
             var min = this.CreateEdge(
                 node.StarSystem,
                 system,
-                node.Fuel.Min,
-                refuel?.Type ?? RefuelType.None,
-                refuel?.Fuel.Min,
+                node.FuelMin,
+                refuelType,
+                refuelMin,
                 useFsdBoost
             );
 
@@ -212,9 +246,9 @@ namespace EliteBuckyball.Application
             var max = this.CreateEdge(
                 node.StarSystem,
                 system,
-                node.Fuel.Max,
-                refuel?.Type ?? RefuelType.None,
-                refuel?.Fuel.Max,
+                node.FuelMax,
+                refuelType,
+                refuelMax,
                 useFsdBoost
             );
 
@@ -244,11 +278,11 @@ namespace EliteBuckyball.Application
                 node,
                 this.CreateNode(
                     system,
-                    new FuelRange(
-                        min.Value.Fuel,
-                        max.Value.Fuel
-                    ),
-                    refuel,
+                    min.Value.Fuel,
+                    max.Value.Fuel,
+                    refuelType,
+                    refuelMin,
+                    refuelMax,
                     jumps
                 ),
                 distance,
@@ -339,7 +373,7 @@ namespace EliteBuckyball.Application
             }
             else
             {
-                time = this.jumpTime.Get(from, to, boostType, RefuelType.None, null).Value;
+                time = this.jumpTime.Get(from, to, boostType, RefuelType.None, null);
             }
 
             if (!time.HasValue)
@@ -358,8 +392,6 @@ namespace EliteBuckyball.Application
 
             return new SimpleEdge
             {
-                From = from,
-                To = to,
                 Distance = time.Value,
                 Fuel = fuel,
                 Jumps = 1
@@ -436,8 +468,6 @@ namespace EliteBuckyball.Application
 
             return new SimpleEdge
             {
-                From = from,
-                To = to,
                 Distance = time,
                 Fuel = fuel,
                 Jumps = 1 + rstJumps
@@ -451,8 +481,6 @@ namespace EliteBuckyball.Application
 
         private struct SimpleEdge
         {
-            public StarSystem From { get; set; }
-            public StarSystem To { get; set; }
             public double Fuel { get; set; }
             public double Distance { get; set; }
             public int Jumps { get; set; }

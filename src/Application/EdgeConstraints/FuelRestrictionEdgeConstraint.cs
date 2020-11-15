@@ -31,12 +31,12 @@ namespace EliteBuckyball.Application.EdgeConstraints
         {
             if (node.StarSystem.Id == this.system.Id)
             {
-                if (this.min.HasValue && node.Fuel.Min < this.min.Value)
+                if (this.min.HasValue && node.FuelMin < this.min.Value)
                 {
                     return false;
                 }
 
-                if (this.max.HasValue && this.max.Value < node.Fuel.Max)
+                if (this.max.HasValue && this.max.Value < node.FuelMax)
                 {
                     return false;
                 }

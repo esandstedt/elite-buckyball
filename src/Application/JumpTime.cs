@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
-using System.Transactions;
 
 namespace EliteBuckyball.Application
 {
@@ -19,8 +18,8 @@ namespace EliteBuckyball.Application
         private const double TIME_GALAXY_MAP = 8;
 
         public const double NeutronWithoutRefuel = TIME_WITCHSPACE + TIME_TRAVEL_ZERO + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
-        public const double SynthesisWithoutRefuel = TIME_WITCHSPACE + TIME_SYNTHESIS_BOOST + TIME_FSD_CHARGE;
-        public const double NormalWithoutRefuel = TIME_WITCHSPACE + TIME_FSD_COOLDOWN + TIME_FSD_CHARGE;
+        private const double SynthesisWithoutRefuel = TIME_WITCHSPACE + TIME_SYNTHESIS_BOOST + TIME_FSD_CHARGE;
+        private const double NormalWithoutRefuel = TIME_WITCHSPACE + TIME_FSD_COOLDOWN + TIME_FSD_CHARGE;
 
         private readonly Ship ship;
 
@@ -36,30 +35,7 @@ namespace EliteBuckyball.Application
 
             if (refuelType == RefuelType.None)
             {
-                switch (boost)
-                {
-                    case BoostType.None:
-                    {
-                        return NormalWithoutRefuel;
-                    }
-                    case BoostType.Neutron:
-                    if (distanceToNeutron == 0)
-                    {
-                        return NeutronWithoutRefuel;
-                    }
-                    else
-                    {
-                        break;
-                    }
-                    case BoostType.Synthesis:
-                    {
-                        return SynthesisWithoutRefuel;
-                    }
-                    default:
-                    {
-                        break;
-                    }
-                }
+                return GetWithoutRefuel(from, boost);
             }
 
             // Block A/B refueling
@@ -92,7 +68,7 @@ namespace EliteBuckyball.Application
                 var timeRefuelScoop = refuelLevel.Value / this.ship.FuelScoopRate;
 
                 var timeRefuel = this.GetSupercruiseTime(distanceToScoopable) +
-                    timeRefuelScoop + 
+                    timeRefuelScoop +
                     TIME_FSD_CHARGE;
 
                 timeRst = Math.Max(timeRst, timeRefuel);
@@ -113,6 +89,35 @@ namespace EliteBuckyball.Application
             }
 
             return timeFst + timeRst;
+        }
+
+        private double GetWithoutRefuel(StarSystem from, BoostType boost)
+        {
+            if (boost == BoostType.None)
+            {
+                return NormalWithoutRefuel;
+            }
+            else if (boost == BoostType.Synthesis)
+            {
+                return SynthesisWithoutRefuel;
+            }
+            else if (boost == BoostType.Neutron)
+            {
+                var distanceToNeutron = from?.DistanceToNeutron ?? 0;
+
+                if (distanceToNeutron == 0)
+                {
+                    return NeutronWithoutRefuel;
+                }
+                else
+                {
+                    return TIME_WITCHSPACE + this.GetSupercruiseTime(distanceToNeutron) + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
+                }
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
         }
 
         private double GetSupercruiseTime(double distance)

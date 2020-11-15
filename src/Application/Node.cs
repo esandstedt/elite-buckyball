@@ -8,35 +8,44 @@ namespace EliteBuckyball.Application
 {
     public class Node : INode
     {
-        public object Id { get; }
-        public StarSystem StarSystem { get; }
-        public bool IsGoal { get; }
-        public FuelRange Fuel { get; }
+        public (long, ushort) Id { get; set; }
+        public StarSystem StarSystem { get; set; }
+        public bool IsGoal { get; set; }
+        public double FuelMin { get; set; }
+        public double FuelMax { get; set; }
+        public RefuelType RefuelType { get; set; }
+        public double? RefuelMin { get; set; }
+        public double? RefuelMax { get; set; }
+        public int Jumps { get; set; }
 
-        public RefuelRange Refuel { get; set; }
-        public int Jumps { get; }
+        object INode.Id => this.Id;
+        public double FuelAvg => (this.FuelMin + this.FuelMax) / 2;
+
+        public Node() { }
 
         public Node(
-            object id,
+            (long, ushort) id,
             StarSystem system,
             bool isGoal,
-            FuelRange fuel,
-            RefuelRange refuel,
+            double fuelMin,
+            double fuelMax, 
+            RefuelType refuelType,
+            double? refuelMin,
+            double? refuelMax,
             int jumps)
         {
             this.Id = id;
             this.StarSystem = system;
             this.IsGoal = isGoal;
-            this.Fuel = fuel;
-
-            this.Refuel = refuel;
+            this.FuelMin = fuelMin;
+            this.FuelMax = fuelMax;
+            this.RefuelType = refuelType;
+            this.RefuelMin = refuelMin;
+            this.RefuelMax = refuelMax;
             this.Jumps = jumps;
         }
 
-        public override int GetHashCode()
-        {
-            return this.Id.GetHashCode();
-        }
+        public override int GetHashCode() => this.Id.GetHashCode();
 
         public override bool Equals(object obj)
         {

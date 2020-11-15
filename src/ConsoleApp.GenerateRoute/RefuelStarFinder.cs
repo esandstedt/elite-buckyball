@@ -67,11 +67,14 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
             }
 
             yield return new Node(
-                Guid.NewGuid(),
+                (0, 0),
                 candidate,
                 false,
-                to.Refuel.Fuel,
-                to.Refuel,
+                to.RefuelMin.Value,
+                to.RefuelMax.Value,
+                to.RefuelType,
+                to.RefuelMin.Value,
+                to.RefuelMax.Value,
                 1
             );
 
@@ -79,8 +82,11 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 to.Id,
                 to.StarSystem,
                 to.IsGoal,
-                to.Fuel,
-                null,
+                to.FuelMin,
+                to.FuelMax,
+                RefuelType.None,
+                0,
+                0,
                 1
             );
         }
@@ -103,7 +109,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 fstJumpFactor = 1;
             }
 
-            var fstJumpRange = ship.GetJumpRange(from.Fuel.Avg);
+            var fstJumpRange = ship.GetJumpRange(from.FuelAvg);
             var fstDistance = fstJumpFactor * fstJumpRange;
             var fstPercent = fstDistance / distance;
 
@@ -117,10 +123,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 sndJumpFactor = 1;
             }
 
-            var sndJumpRange = ship.GetJumpRange(
-                ((to.Fuel.Min + to.Fuel.Max) / 2) +
-                this.ship.FSD.MaxFuelPerJump
-            );
+            var sndJumpRange = ship.GetJumpRange(to.FuelAvg + this.ship.FSD.MaxFuelPerJump);
             var sndDistance = sndJumpFactor * sndJumpRange;
             var sndPercent = 1 - (sndDistance / distance);
 
@@ -141,10 +144,10 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
         private bool IsValidCandidate(Node from, Node to, StarSystem candidate)
         {
-            return this.CanMakeJump(from.StarSystem, candidate, from.Fuel.Min) &&
-                this.CanMakeJump(from.StarSystem, candidate, from.Fuel.Max) &&
-                this.CanMakeJump(candidate, to.StarSystem, to.Refuel.Fuel.Min) &&
-                this.CanMakeJump(candidate, to.StarSystem, to.Refuel.Fuel.Max);
+            return this.CanMakeJump(from.StarSystem, candidate, from.FuelMin) &&
+                this.CanMakeJump(from.StarSystem, candidate, from.FuelMax) &&
+                this.CanMakeJump(candidate, to.StarSystem, to.RefuelMin.Value) &&
+                this.CanMakeJump(candidate, to.StarSystem, to.RefuelMax.Value);
         }
 
         private bool CanMakeJump(StarSystem from, StarSystem to, double fuel)
