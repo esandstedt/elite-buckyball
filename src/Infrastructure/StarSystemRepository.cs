@@ -294,7 +294,12 @@ namespace EliteBuckyball.Infrastructure
                     yield return new Sector(coord.X, coord.Y, coord.Z, list);
                 }
 
-                Console.WriteLine("Sector.CreateMany: {0} {1} ms", coords.Count, (DateTime.Now - tStart).TotalMilliseconds);
+                Console.WriteLine("{0} Sector.CreateMany: {1} {2} {3} ms",
+                    DateTime.Now.ToString(@"HH\:mm\:ss"),
+                    mode.ToString(),
+                    coords.Count,
+                    (DateTime.Now - tStart).TotalMilliseconds
+                );
             }
 
             public Sector(int x, int y, int z, List<StarSystem> list)

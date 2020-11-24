@@ -37,7 +37,6 @@ namespace EliteBuckyball.Application
             }
 
 
-            var tStart = DateTime.Now;
             var closestDistance = double.MaxValue;
             INode closest = null;
 
@@ -56,7 +55,7 @@ namespace EliteBuckyball.Application
                     closestDistance = distance;
 
                     Console.WriteLine("{0} {1,8} {2,8} {3,8} | {4,6} {5,6} | {6,6} {7}",
-                        (DateTime.Now - tStart).ToString(@"hh\:mm\:ss"),
+                        DateTime.Now.ToString(@"HH\:mm\:ss"),
                         i,
                         this.open.Count,
                         this.cameFrom.Count,
