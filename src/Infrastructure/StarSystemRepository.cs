@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ namespace EliteBuckyball.Infrastructure
 {
     public class StarSystemRepository : IStarSystemRepository
     {
+
+        public const int SECTOR_SIZE = 500;
 
         public enum Mode
         {
@@ -83,14 +86,15 @@ namespace EliteBuckyball.Infrastructure
 
         public IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance)
         {
-            var minSectorX = (int)Math.Floor((coordinate.X - distance) / 1000);
-            var maxSectorX = (int)Math.Floor((coordinate.X + distance) / 1000);
-            var minSectorY = (int)Math.Floor((coordinate.Y - distance) / 1000);
-            var maxSectorY = (int)Math.Floor((coordinate.Y + distance) / 1000);
-            var minSectorZ = (int)Math.Floor((coordinate.Z - distance) / 1000);
-            var maxSectorZ = (int)Math.Floor((coordinate.Z + distance) / 1000);
+            var minSectorX = (int)Math.Floor((coordinate.X - distance) / SECTOR_SIZE);
+            var maxSectorX = (int)Math.Floor((coordinate.X + distance) / SECTOR_SIZE);
+            var minSectorY = (int)Math.Floor((coordinate.Y - distance) / SECTOR_SIZE);
+            var maxSectorY = (int)Math.Floor((coordinate.Y + distance) / SECTOR_SIZE);
+            var minSectorZ = (int)Math.Floor((coordinate.Z - distance) / SECTOR_SIZE);
+            var maxSectorZ = (int)Math.Floor((coordinate.Z + distance) / SECTOR_SIZE);
 
             var sectors = new List<Sector>();
+            var coords = new List<Coordinate>();
 
             for (var x = minSectorX; x <= maxSectorX; x++)
             {
@@ -101,11 +105,24 @@ namespace EliteBuckyball.Infrastructure
                         var key = (x, y, z);
                         if (!this.sectors.ContainsKey(key))
                         {
-                            this.sectors[key] = new Sector(this.dbContext, this.mode, x, y, z);
+                            coords.Add(new Coordinate(x, y, z));
                         }
-
-                        sectors.Add(this.sectors[key]);
+                        else
+                        {
+                            sectors.Add(this.sectors[key]);
+                        }
                     }
+                }
+            }
+
+            if (coords.Any())
+            {
+                foreach (var sector in Sector.CreateMany(this.dbContext, this.mode, coords))
+                {
+                    var key = (sector.X, sector.Y, sector.Z);
+                    this.sectors[key] = sector;
+
+                    sectors.Add(sector);
                 }
             }
 
@@ -136,9 +153,9 @@ namespace EliteBuckyball.Infrastructure
                 X = system.Coordinates.X,
                 Y = system.Coordinates.Y,
                 Z = system.Coordinates.Z,
-                SectorX = (int)Math.Floor(system.Coordinates.X / 1000),
-                SectorY = (int)Math.Floor(system.Coordinates.Y / 1000),
-                SectorZ = (int)Math.Floor(system.Coordinates.Z / 1000),
+                SectorX = (int)Math.Floor(system.Coordinates.X / SECTOR_SIZE),
+                SectorY = (int)Math.Floor(system.Coordinates.Y / SECTOR_SIZE),
+                SectorZ = (int)Math.Floor(system.Coordinates.Z / SECTOR_SIZE),
                 Date = system.Date.Date,
                 DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null,
                 DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null,
@@ -196,9 +213,9 @@ namespace EliteBuckyball.Infrastructure
             entity.X = system.Coordinates.X;
             entity.Y = system.Coordinates.Y;
             entity.Z = system.Coordinates.Z;
-            entity.SectorX = (int)Math.Floor(system.Coordinates.X / 1000);
-            entity.SectorY = (int)Math.Floor(system.Coordinates.Y / 1000);
-            entity.SectorZ = (int)Math.Floor(system.Coordinates.Z / 1000);
+            entity.SectorX = (int)Math.Floor(system.Coordinates.X / SECTOR_SIZE);
+            entity.SectorY = (int)Math.Floor(system.Coordinates.Y / SECTOR_SIZE);
+            entity.SectorZ = (int)Math.Floor(system.Coordinates.Z / SECTOR_SIZE);
             entity.Date = system.Date.Date;
             entity.DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null;
             entity.DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null;
@@ -214,50 +231,78 @@ namespace EliteBuckyball.Infrastructure
 
             private readonly List<StarSystem> list;
 
-            public Sector(ApplicationDbContext dbContext, Mode mode, int x, int y, int z)
+            public int X { get; }
+            public int Y { get; }
+            public int Z { get; }
+
+            public static Sector Create(ApplicationDbContext dbContext, Mode mode, Coordinate coord)
             {
-                if (mode == Mode.All)
+                return CreateMany(dbContext, mode, new List<Coordinate> { coord }).Single();
+            }
+
+            public static IEnumerable<Sector> CreateMany(ApplicationDbContext dbContext, Mode mode, List<Coordinate> coords)
+            {
+                var tStart = DateTime.Now;
+
+                foreach (var coord in coords)
                 {
-                    this.list = dbContext.StarSystems
-                        .AsNoTracking()
-                        .Where(s =>
-                            s.SectorX == x &&
-                            s.SectorY == y &&
-                            s.SectorZ == z
-                        )
-                        .Select(Convert)
-                        .ToList();
+                    List<StarSystem> list;
+
+                    if (mode == Mode.All)
+                    {
+                        list = dbContext.StarSystems
+                            .AsNoTracking()
+                            .Where(s =>
+                                s.SectorX == coord.X &&
+                                s.SectorY == coord.Y &&
+                                s.SectorZ == coord.Z
+                            )
+                            .Select(Convert)
+                            .ToList();
+                    }
+                    else if (mode == Mode.Neutron)
+                    {
+                        list = dbContext.StarSystems
+                            .AsNoTracking()
+                            .Where(s =>
+                                s.DistanceToNeutron.HasValue && s.DistanceToNeutron.Value < 100 &&
+                                s.SectorX == coord.X &&
+                                s.SectorY == coord.Y &&
+                                s.SectorZ == coord.Z
+                            )
+                            .Select(Convert)
+                            .ToList();
+                    }
+                    else if (mode == Mode.Scoopable)
+                    {
+                        list = dbContext.StarSystems
+                            .AsNoTracking()
+                            .Where(s =>
+                                s.DistanceToScoopable.HasValue && s.DistanceToScoopable.Value == 0 &&
+                                s.SectorX == coord.X &&
+                                s.SectorY == coord.Y &&
+                                s.SectorZ == coord.Z
+                            )
+                            .Select(Convert)
+                            .ToList();
+                    }
+                    else
+                    {
+                        throw new InvalidOperationException();
+                    }
+
+                    yield return new Sector(coord.X, coord.Y, coord.Z, list);
                 }
-                else if (mode == Mode.Neutron)
-                {
-                    this.list = dbContext.StarSystems
-                        .AsNoTracking()
-                        .Where(s =>
-                            s.DistanceToNeutron.HasValue && s.DistanceToNeutron.Value < 100 &&
-                            s.SectorX == x &&
-                            s.SectorY == y &&
-                            s.SectorZ == z
-                        )
-                        .Select(Convert)
-                        .ToList();
-                }
-                else if (mode == Mode.Scoopable)
-                {
-                    this.list = dbContext.StarSystems
-                        .AsNoTracking()
-                        .Where(s =>
-                            s.DistanceToScoopable.HasValue && s.DistanceToScoopable.Value == 0 &&
-                            s.SectorX == x &&
-                            s.SectorY == y &&
-                            s.SectorZ == z
-                        )
-                        .Select(Convert)
-                        .ToList();
-                }
-                else
-                {
-                    throw new InvalidOperationException();
-                }
+
+                Console.WriteLine("Sector.CreateMany: {0} {1} ms", coords.Count, (DateTime.Now - tStart).TotalMilliseconds);
+            }
+
+            public Sector(int x, int y, int z, List<StarSystem> list)
+            {
+                this.X = x;
+                this.Y = y;
+                this.Z = z;
+                this.list = list;
             }
 
             public IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance)
@@ -278,6 +323,20 @@ namespace EliteBuckyball.Infrastructure
                     DistanceToScoopable = system.DistanceToScoopable ?? default,
                     Date = system.Date ?? default
                 };
+            }
+        }
+
+        private class Coordinate
+        {
+            public int X { get;  }
+            public int Y { get;  }
+            public int Z { get;  }
+
+            public Coordinate(int x, int y, int z)
+            {
+                this.X = x;
+                this.Y = y;
+                this.Z = z;
             }
         }
     }

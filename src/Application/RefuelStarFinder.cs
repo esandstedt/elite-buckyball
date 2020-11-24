@@ -1,12 +1,11 @@
-﻿using EliteBuckyball.Application;
-using EliteBuckyball.Application.Interfaces;
+﻿using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace EliteBuckyball.ConsoleApp.GenerateRoute
+namespace EliteBuckyball.Application
 {
     public class RefuelStarFinder
     {
@@ -47,13 +46,18 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
             }
         }
 
-        private IEnumerable<Node> Apply(Node from, Node to)
+        public StarSystem GetCandidate(Node from, Node to)
         {
             var point = this.GetRefuelCoordinates(from, to);
 
-            var candidate = this.starSystemRepository.GetNeighbors(point, 50)
+            return this.starSystemRepository.GetNeighbors(point, 50)
                 .OrderBy(x => Vector3.Distance(point, x.Coordinates))
                 .FirstOrDefault(x => this.IsValidCandidate(from, to, x));
+        }
+
+        private IEnumerable<Node> Apply(Node from, Node to)
+        {
+            var candidate = this.GetCandidate(from, to);
 
             if (candidate == null)
             {
@@ -61,7 +65,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 {
                     Id = 0,
                     Name = "???",
-                    Coordinates = point,
+                    Coordinates = this.GetRefuelCoordinates(from, to),
                     HasScoopable = true,
                 };
             }

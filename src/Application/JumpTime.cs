@@ -10,7 +10,7 @@ namespace EliteBuckyball.Application
         private const double TIME_WITCHSPACE = 14;
         private const double TIME_FSD_CHARGE = 20;
         private const double TIME_FSD_COOLDOWN = 10;
-        private const double TIME_NEUTRON_BOOST = 6 + 1.5; // charge + repair
+        private const double TIME_NEUTRON_BOOST = 4 + 1.8; // charge + repair
         private const double TIME_SYNTHESIS_BOOST = 20;
         private const double TIME_TRAVEL_ZERO = 10;
         private const double TIME_TRAVEL_MIN = 20;

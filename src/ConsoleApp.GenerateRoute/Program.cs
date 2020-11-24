@@ -136,8 +136,21 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 })
                 .ToList();
 
+            var refuelStarFinder = new RefuelStarFinder(
+                new StarSystemRepository(
+                    dbContext,
+                    new StarSystemRepository.Options
+                    {
+                        Mode = StarSystemRepository.Mode.Scoopable
+                    }
+                ),
+                ship,
+                app.UseFsdBoost
+            );
+
             var nodeHandler = new NodeHandler(
                 repository,
+                refuelStarFinder,
                 edgeConstraints,
                 ship,
                 refuelLevels,
@@ -165,19 +178,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
             repository.Clear();
 
-            route = new RefuelStarFinder(
-                new StarSystemRepository(
-                    dbContext,
-                    new StarSystemRepository.Options
-                    {
-                        Mode = StarSystemRepository.Mode.Scoopable
-                    }
-                ),
-                ship,
-                app.UseFsdBoost
-            )
-                .Invoke(route)
-                .ToList();
+            route = refuelStarFinder.Invoke(route).ToList();
 
             var tEnd = DateTime.UtcNow;
 
