@@ -17,6 +17,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp.LoadSystems", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ConsoleApp.GenerateRoute", "src\ConsoleApp.GenerateRoute\ConsoleApp.GenerateRoute.csproj", "{878B9394-7E06-4FD4-A932-04BA7AE11BDA}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleApp.LoadGalaxy", "src\ConsoleApp.LoadGalaxy\ConsoleApp.LoadGalaxy.csproj", "{34EA635A-3A99-4856-9F34-F81FDD768C1C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -47,6 +49,10 @@ Global
 		{878B9394-7E06-4FD4-A932-04BA7AE11BDA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{878B9394-7E06-4FD4-A932-04BA7AE11BDA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{878B9394-7E06-4FD4-A932-04BA7AE11BDA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34EA635A-3A99-4856-9F34-F81FDD768C1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34EA635A-3A99-4856-9F34-F81FDD768C1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34EA635A-3A99-4856-9F34-F81FDD768C1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34EA635A-3A99-4856-9F34-F81FDD768C1C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -58,6 +64,7 @@ Global
 		{925F9288-0244-4261-9048-B7E08AE45651} = {48B8BB33-8D08-483B-A93E-B56804097109}
 		{E83C0B11-BAFF-491B-A4A1-3F9196C0B52F} = {48B8BB33-8D08-483B-A93E-B56804097109}
 		{878B9394-7E06-4FD4-A932-04BA7AE11BDA} = {48B8BB33-8D08-483B-A93E-B56804097109}
+		{34EA635A-3A99-4856-9F34-F81FDD768C1C} = {48B8BB33-8D08-483B-A93E-B56804097109}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {7EEC6E35-D638-449D-8BB4-980B47F4253B}

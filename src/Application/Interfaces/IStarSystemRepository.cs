@@ -24,6 +24,8 @@ namespace EliteBuckyball.Application.Interfaces
 
         void Create(StarSystem system);
 
+        void CreateMany(IEnumerable<StarSystem> system);
+
         void Update(StarSystem system);
 
         void Update(List<StarSystem> system);

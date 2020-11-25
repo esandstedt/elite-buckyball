@@ -146,25 +146,32 @@ namespace EliteBuckyball.Infrastructure
 
         public void Create(StarSystem system)
         {
-            var entity = new Persistence.Entities.StarSystem
+            this.CreateMany(new List<StarSystem> { system });
+        }
+
+        public void CreateMany(IEnumerable<StarSystem> systems)
+        {
+            foreach (var system in systems)
             {
-                Id = system.Id,
-                Name = system.Name,
-                X = system.Coordinates.X,
-                Y = system.Coordinates.Y,
-                Z = system.Coordinates.Z,
-                SectorX = (int)Math.Floor(system.Coordinates.X / SECTOR_SIZE),
-                SectorY = (int)Math.Floor(system.Coordinates.Y / SECTOR_SIZE),
-                SectorZ = (int)Math.Floor(system.Coordinates.Z / SECTOR_SIZE),
-                Date = system.Date.Date,
-                DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null,
-                DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null,
-            };
+                var entity = new Persistence.Entities.StarSystem
+                {
+                    Id = system.Id,
+                    Name = system.Name,
+                    X = system.Coordinates.X,
+                    Y = system.Coordinates.Y,
+                    Z = system.Coordinates.Z,
+                    SectorX = (int)Math.Floor(system.Coordinates.X / SECTOR_SIZE),
+                    SectorY = (int)Math.Floor(system.Coordinates.Y / SECTOR_SIZE),
+                    SectorZ = (int)Math.Floor(system.Coordinates.Z / SECTOR_SIZE),
+                    Date = system.Date.Date,
+                    DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null,
+                    DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null,
+                };
 
-            dbContext.Add(entity);
+                dbContext.Add(entity);
+            }
+
             dbContext.SaveChanges();
-
-            dbContext.Entry(entity).State = EntityState.Detached;
         }
 
         public void Update(StarSystem system)

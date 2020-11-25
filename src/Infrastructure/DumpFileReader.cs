@@ -15,8 +15,8 @@ namespace EliteBuckyball.Infrastructure
 
         public DumpFileReader(string filePath)
         {
-            using (var fileStream = new FileStream(filePath, FileMode.Open))
-            using (var zipStream = new GZipStream(fileStream, CompressionMode.Decompress))
+            using var fileStream = new FileStream(filePath, FileMode.Open);
+            using var zipStream = new GZipStream(fileStream, CompressionMode.Decompress);
             {
                 list = JsonSerializer.DeserializeAsync<List<T>>(zipStream).Result;
             }
