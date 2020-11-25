@@ -137,6 +137,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 .ToList();
 
             var refuelStarFinder = new RefuelStarFinder(
+                dbContext,
                 new StarSystemRepository(
                     dbContext,
                     new StarSystemRepository.Options

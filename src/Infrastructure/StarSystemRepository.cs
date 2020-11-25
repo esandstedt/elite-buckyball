@@ -48,7 +48,7 @@ namespace EliteBuckyball.Infrastructure
             var result = this.dbContext.StarSystems.Find(id);
             if (result != null)
             {
-                return Convert(result);
+                return result.AsDomainObject();
             }
 
             return null;
@@ -59,7 +59,7 @@ namespace EliteBuckyball.Infrastructure
             var result = this.dbContext.StarSystems.SingleOrDefault(x => x.Name == name);
             if (result != null)
             {
-                return Convert(result);
+                return result.AsDomainObject();
             }
 
             return null;
@@ -127,21 +127,6 @@ namespace EliteBuckyball.Infrastructure
             }
 
             return sectors.SelectMany(s => s.GetNeighbors(coordinate, distance));
-        }
-
-        private static StarSystem Convert(Persistence.Entities.StarSystem system)
-        {
-            return new StarSystem
-            {
-                Id = system.Id,
-                Name = system.Name,
-                Coordinates = new Vector3(system.X, system.Y, system.Z),
-                HasNeutron = system.DistanceToNeutron.HasValue,
-                DistanceToNeutron = system.DistanceToNeutron ?? default,
-                HasScoopable = system.DistanceToScoopable.HasValue,
-                DistanceToScoopable = system.DistanceToScoopable ?? default,
-                Date = system.Date ?? default
-            };
         }
 
         public void Create(StarSystem system)

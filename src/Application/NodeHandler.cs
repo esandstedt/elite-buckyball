@@ -24,7 +24,7 @@ namespace EliteBuckyball.Application
         private const double JUMPRANGE_CACHE_RESOLUTION = 0.001;
 
         private readonly IStarSystemRepository starSystemRepository;
-        private readonly RefuelStarFinder refuelStarFinder;
+        private readonly IRefuelStarFinder refuelStarFinder;
         private readonly IEnumerable<IEdgeConstraint> edgeConstraints;
         private readonly Ship ship;
         private readonly IReadOnlyList<RefuelRange> refuelLevels;
@@ -44,7 +44,7 @@ namespace EliteBuckyball.Application
 
         public NodeHandler(
             IStarSystemRepository starSystemRepository,
-            RefuelStarFinder refuelStarFinder,
+            IRefuelStarFinder refuelStarFinder,
             IEnumerable<IEdgeConstraint> edgeConstraints,
             Ship ship,
             List<RefuelRange> refuelLevels,
@@ -161,7 +161,7 @@ namespace EliteBuckyball.Application
         }
 
         private Edge ApplyRefuelStarFinder(Edge edge) {
-            if (edge.Jumps == 2)
+            if (edge.Jumps == 2 && edge.To.RefuelType == RefuelType.Heatsink)
             {
                 var from = edge.From;
                 var to = edge.To;

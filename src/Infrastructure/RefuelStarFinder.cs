@@ -1,23 +1,29 @@
-﻿using EliteBuckyball.Application.Interfaces;
+﻿using EliteBuckyball.Application;
+using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
+using EliteBuckyball.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
-namespace EliteBuckyball.Application
+namespace EliteBuckyball.Infrastructure
 {
-    public class RefuelStarFinder
+    public class RefuelStarFinder : IRefuelStarFinder
     {
+        private readonly ApplicationDbContext dbContext;
         private readonly IStarSystemRepository starSystemRepository;
         private readonly Ship ship;
         private readonly bool useFsdBoost;
 
         public RefuelStarFinder(
+            ApplicationDbContext dbContext,
             IStarSystemRepository starSystemRepository,
             Ship ship,
             bool useFsdBoost)
         {
+            this.dbContext = dbContext;
             this.starSystemRepository = starSystemRepository;
             this.ship = ship;
             this.useFsdBoost = useFsdBoost;
@@ -49,6 +55,42 @@ namespace EliteBuckyball.Application
         public StarSystem GetCandidate(Node from, Node to)
         {
             var point = this.GetRefuelCoordinates(from, to);
+
+            /*
+            var tStart = DateTime.Now;
+
+            var results = this.dbContext.StarSystems
+                .FromSqlRaw(
+@"
+SELECT *, SQRT(POW(`x`-{0}, 2) + POW(`y`-{1}, 2) + POW(`z`-{2}, 2)) AS `distance`
+FROM `system`
+WHERE `sectorX` IN ({3},{4}) 
+  AND `sectorY` IN ({5},{6})
+  AND `sectorZ` IN ({7},{8})
+  AND `distanceToScoopable` = 0 
+HAVING `distance` < 50
+ORDER BY `distance`
+LIMIT 40;
+",
+                    point.X,
+                    point.Y,
+                    point.Z,
+                    (int)Math.Floor((point.X - 50) / 500),
+                    (int)Math.Floor((point.X + 50) / 500),
+                    (int)Math.Floor((point.Y - 50) / 500),
+                    (int)Math.Floor((point.Y + 50) / 500),
+                    (int)Math.Floor((point.Z - 50) / 500),
+                    (int)Math.Floor((point.Z + 50) / 500)
+                )
+                .Select(x => x.AsDomainObject())
+                .ToList();
+
+            var tDiff = (DateTime.Now - tStart).TotalMilliseconds;
+            Console.WriteLine(tDiff);
+
+            return results
+                .FirstOrDefault(x => this.IsValidCandidate(from, to, x));
+             */
 
             return this.starSystemRepository.GetNeighbors(point, 50)
                 .OrderBy(x => Vector3.Distance(point, x.Coordinates))

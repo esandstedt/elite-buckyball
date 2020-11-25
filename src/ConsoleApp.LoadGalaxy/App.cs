@@ -108,7 +108,7 @@ namespace ConsoleApp.LoadGalaxy
                                     system.Name
                                 );
 
-                                if (5000 <= systems.Count)
+                                if (1000 <= systems.Count)
                                 {
                                     this.starSystemRepository.CreateMany(systems);
                                     systems.Clear();
