@@ -4,6 +4,7 @@ using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Domain.Entities;
 using EliteBuckyball.Infrastructure;
 using EliteBuckyball.Infrastructure.Persistence;
+using EliteBuckyball.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,7 +42,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 dbContext,
                 new StarSystemRepository.Options
                 {
-                    Mode = StarSystemRepository.Mode.Neutron 
+                    Mode = "neutron"
                 }
             );
 
@@ -142,7 +143,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     dbContext,
                     new StarSystemRepository.Options
                     {
-                        Mode = StarSystemRepository.Mode.Scoopable
+                        Mode = "scoopable"
                     }
                 ),
                 ship,
@@ -160,6 +161,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 new NodeHandler.Options
                 {
                     UseFsdBoost = app.UseFsdBoost,
+                    UseRefuelStarFinder = app.UseRefuelStarFinder,
                     MultiJumpRangeFactor = app.MultiJumpRangeFactor,
                     NeighborRangeMin = Math.Max(500, 6 * ship.GetJumpRange(ship.FSD.MaxFuelPerJump)),
                     NeighborRangeMax = 5000,
@@ -177,9 +179,10 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 .Cast<Node>()
                 .ToList();
 
-            repository.Clear();
-
-            route = refuelStarFinder.Invoke(route).ToList();
+            if (app.UseRefuelStarFinder)
+            {
+                route = refuelStarFinder.Invoke(route).ToList();
+            }
 
             var tEnd = DateTime.UtcNow;
 

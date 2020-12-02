@@ -9,5 +9,6 @@ namespace EliteBuckyball.Application.Interfaces
     {
         IEnumerable<Node> Invoke(List<Node> nodes);
         StarSystem GetCandidate(Node from, Node to);
+        StarSystem GetCandidate(StarSystem from, double fromFuel, StarSystem to, double toRefuel);
     }
 }

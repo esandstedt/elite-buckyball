@@ -16,6 +16,21 @@ namespace EliteBuckyball.Application
         public RefuelType RefuelType { get; set; }
         public double? RefuelMin { get; set; }
         public double? RefuelMax { get; set; }
+
+        public double? RefuelAvg
+        {
+            get
+            {
+                if (this.RefuelMin.HasValue && this.RefuelMax.HasValue)
+                {
+                    return (this.RefuelMin.Value + this.RefuelMax.Value) / 2;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
         public int Jumps { get; set; }
 
         object INode.Id => this.Id;

@@ -11,6 +11,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         public string Goal { get; set; }
         public List<EdgeConstraintSettings> EdgeConstraints { get; set; }
         public bool UseFsdBoost { get; set; }
+        public bool UseRefuelStarFinder { get; set; }
         public double MultiJumpRangeFactor { get; set; }
         public bool NeutronBoostedAtStart { get; set; }
     }

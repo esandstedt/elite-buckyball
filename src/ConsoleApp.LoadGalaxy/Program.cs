@@ -1,6 +1,7 @@
 ﻿using EliteBuckyball.Application.Interfaces;
 using EliteBuckyball.Infrastructure;
 using EliteBuckyball.Infrastructure.Persistence;
+using EliteBuckyball.Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,7 +29,7 @@ namespace ConsoleApp.LoadGalaxy
                 })
                 .AddSingleton<IConfiguration>(configuration)
                 .AddTransient<IStarSystemRepository, StarSystemRepository>()
-                .AddSingleton(new StarSystemRepository.Options { Mode = StarSystemRepository.Mode.All })
+                .AddSingleton(new StarSystemRepository.Options { Mode = "all" })
                 .AddTransient<App>()
                 .BuildServiceProvider();
 

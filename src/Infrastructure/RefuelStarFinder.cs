@@ -54,7 +54,28 @@ namespace EliteBuckyball.Infrastructure
 
         public StarSystem GetCandidate(Node from, Node to)
         {
-            var point = this.GetRefuelCoordinates(from, to);
+            var point = this.GetRefuelCoordinates(from.StarSystem, from.FuelAvg, to.StarSystem, to.RefuelAvg.Value);
+
+            return this.starSystemRepository.GetNeighbors(point, 50)
+                .OrderBy(x => Vector3.Distance(point, x.Coordinates))
+                .FirstOrDefault(x =>      
+                    this.CanMakeJump(from.StarSystem, x, from.FuelMin) &&
+                    this.CanMakeJump(from.StarSystem, x, from.FuelMax) &&
+                    this.CanMakeJump(x, to.StarSystem, to.RefuelMin.Value) &&
+                    this.CanMakeJump(x, to.StarSystem, to.RefuelMax.Value)
+                );
+        }
+
+        public StarSystem GetCandidate(StarSystem from, double fromFuel, StarSystem to, double toRefuel)
+        {
+            var point = this.GetRefuelCoordinates(from, fromFuel, to, toRefuel);
+
+            return this.starSystemRepository.GetNeighbors(point, 50)
+                .OrderBy(x => Vector3.Distance(point, x.Coordinates))
+                .FirstOrDefault(x =>
+                    this.CanMakeJump(from, x, fromFuel) &&
+                    this.CanMakeJump(x, to, toRefuel)
+                );
 
             /*
             var tStart = DateTime.Now;
@@ -92,9 +113,6 @@ LIMIT 40;
                 .FirstOrDefault(x => this.IsValidCandidate(from, to, x));
              */
 
-            return this.starSystemRepository.GetNeighbors(point, 50)
-                .OrderBy(x => Vector3.Distance(point, x.Coordinates))
-                .FirstOrDefault(x => this.IsValidCandidate(from, to, x));
         }
 
         private IEnumerable<Node> Apply(Node from, Node to)
@@ -107,7 +125,7 @@ LIMIT 40;
                 {
                     Id = 0,
                     Name = "???",
-                    Coordinates = this.GetRefuelCoordinates(from, to),
+                    Coordinates = this.GetRefuelCoordinates(from.StarSystem, from.FuelAvg, to.StarSystem, to.FuelAvg),
                     HasScoopable = true,
                 };
             }
@@ -137,12 +155,12 @@ LIMIT 40;
             );
         }
 
-        private Vector3 GetRefuelCoordinates(Node from, Node to)
+        private Vector3 GetRefuelCoordinates(StarSystem from, double fromFuel,  StarSystem to, double toRefuel)
         {
-            var distance = Vector3.Distance(from.StarSystem.Coordinates, to.StarSystem.Coordinates);
+            var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
 
             double fstJumpFactor;
-            if (from.StarSystem.HasNeutron && from.StarSystem.DistanceToNeutron < 100)
+            if (from.HasNeutron && from.DistanceToNeutron < 100)
             {
                 fstJumpFactor = 4;
             }
@@ -155,7 +173,7 @@ LIMIT 40;
                 fstJumpFactor = 1;
             }
 
-            var fstJumpRange = ship.GetJumpRange(from.FuelAvg);
+            var fstJumpRange = ship.GetJumpRange(fromFuel);
             var fstDistance = fstJumpFactor * fstJumpRange;
             var fstPercent = fstDistance / distance;
 
@@ -169,31 +187,23 @@ LIMIT 40;
                 sndJumpFactor = 1;
             }
 
-            var sndJumpRange = ship.GetJumpRange(to.FuelAvg + this.ship.FSD.MaxFuelPerJump);
+            var sndJumpRange = ship.GetJumpRange(toRefuel - this.ship.FSD.MaxFuelPerJump);
             var sndDistance = sndJumpFactor * sndJumpRange;
             var sndPercent = 1 - (sndDistance / distance);
 
             var percent = 0.25 * fstPercent + 0.75 * sndPercent;
 
             return Vector3.Add(
-                from.StarSystem.Coordinates,
+                from.Coordinates,
                 Vector3.Multiply(
                     (float)percent,
                     Vector3.Subtract(
-                        to.StarSystem.Coordinates,
-                        from.StarSystem.Coordinates
+                        to.Coordinates,
+                        from.Coordinates
                     )
                 )
             );
 
-        }
-
-        private bool IsValidCandidate(Node from, Node to, StarSystem candidate)
-        {
-            return this.CanMakeJump(from.StarSystem, candidate, from.FuelMin) &&
-                this.CanMakeJump(from.StarSystem, candidate, from.FuelMax) &&
-                this.CanMakeJump(candidate, to.StarSystem, to.RefuelMin.Value) &&
-                this.CanMakeJump(candidate, to.StarSystem, to.RefuelMax.Value);
         }
 
         private bool CanMakeJump(StarSystem from, StarSystem to, double fuel)
