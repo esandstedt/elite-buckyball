@@ -10,7 +10,7 @@ namespace EliteBuckyball.Application
         private const double TIME_WITCHSPACE = 14;
         private const double TIME_FSD_CHARGE = 20;
         private const double TIME_FSD_COOLDOWN = 10;
-        private const double TIME_NEUTRON_BOOST = 4 + 1.8; // charge + repair
+        private const double TIME_NEUTRON_BOOST = 7 + 1.8; // charge + repair
         private const double TIME_SYNTHESIS_BOOST = 20;
         private const double TIME_TRAVEL_ZERO = 10;
         private const double TIME_TRAVEL_MIN = 20;
@@ -28,7 +28,7 @@ namespace EliteBuckyball.Application
             this.ship = ship;
         }
 
-        public double? Get(StarSystem from, StarSystem to, BoostType boost, RefuelType refuelType, double? refuelLevel)
+        public double? Get(StarSystem from, BoostType boost, RefuelType refuelType, double? refuelLevel)
         {
             var distanceToNeutron = from?.DistanceToNeutron ?? 0;
             var distanceToScoopable = from?.DistanceToScoopable ?? 0;

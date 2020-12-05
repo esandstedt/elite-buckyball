@@ -76,43 +76,6 @@ namespace EliteBuckyball.Infrastructure
                     this.CanMakeJump(from, x, fromFuel) &&
                     this.CanMakeJump(x, to, toRefuel)
                 );
-
-            /*
-            var tStart = DateTime.Now;
-
-            var results = this.dbContext.StarSystems
-                .FromSqlRaw(
-@"
-SELECT *, SQRT(POW(`x`-{0}, 2) + POW(`y`-{1}, 2) + POW(`z`-{2}, 2)) AS `distance`
-FROM `system`
-WHERE `sectorX` IN ({3},{4}) 
-  AND `sectorY` IN ({5},{6})
-  AND `sectorZ` IN ({7},{8})
-  AND `distanceToScoopable` = 0 
-HAVING `distance` < 50
-ORDER BY `distance`
-LIMIT 40;
-",
-                    point.X,
-                    point.Y,
-                    point.Z,
-                    (int)Math.Floor((point.X - 50) / 500),
-                    (int)Math.Floor((point.X + 50) / 500),
-                    (int)Math.Floor((point.Y - 50) / 500),
-                    (int)Math.Floor((point.Y + 50) / 500),
-                    (int)Math.Floor((point.Z - 50) / 500),
-                    (int)Math.Floor((point.Z + 50) / 500)
-                )
-                .Select(x => x.AsDomainObject())
-                .ToList();
-
-            var tDiff = (DateTime.Now - tStart).TotalMilliseconds;
-            Console.WriteLine(tDiff);
-
-            return results
-                .FirstOrDefault(x => this.IsValidCandidate(from, to, x));
-             */
-
         }
 
         private IEnumerable<Node> Apply(Node from, Node to)

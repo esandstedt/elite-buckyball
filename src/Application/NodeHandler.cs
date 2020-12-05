@@ -379,13 +379,13 @@ namespace EliteBuckyball.Application
                     return null;
                 }
 
-                time = this.jumpTime.Get(from, to, boostType, refuelType, refuelLevel.Value - fuel);
+                time = this.jumpTime.Get(from, boostType, refuelType, refuelLevel.Value - fuel);
 
                 fuel = refuelLevel.Value;
             }
             else
             {
-                time = this.jumpTime.Get(from, to, boostType, RefuelType.None, null);
+                time = this.jumpTime.Get(from, boostType, RefuelType.None, null);
             }
 
             if (!time.HasValue)
@@ -412,6 +412,11 @@ namespace EliteBuckyball.Application
 
         private SimpleEdge? GetMultiJump(StarSystem from, StarSystem to, double fuel, RefuelType refuelType, double? refuelLevel)
         {
+            // must refuel 
+            if (refuelType == RefuelType.None)
+            {
+                return null;
+            }
 
             var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
 
@@ -441,24 +446,6 @@ namespace EliteBuckyball.Application
                 return null;
             }
 
-            // must refuel 
-            if (refuelType == RefuelType.None)
-            {
-                return null;
-            }
-
-            // must be above current fuel
-            if (refuelLevel.Value < fuel)
-            {
-                return null;
-            }
-
-            // must have enough fuel to make first jump
-            if (fuel < this.ship.FSD.MaxFuelPerJump + this.minimumFuelLevel)
-            {
-                return null;
-            }
-
             var rstDistance = distance - fstDistance;
             var rstJumpRange = this.options.MultiJumpRangeFactor * this.GetJumpRange(refuelLevel.Value);
             var rstJumpFactor = this.options.UseFsdBoost ? 2 : 1;
@@ -479,21 +466,45 @@ namespace EliteBuckyball.Application
                     return null;
                 }
 
-                timeFst = this.jumpTime.Get(from, refuel, fstBoostType, RefuelType.None, null);
+                timeFst = this.jumpTime.Get(from, fstBoostType, RefuelType.None, null);
                 var distFst = Vector3.Distance(from.Coordinates, refuel.Coordinates);
                 var fuelCostFst = this.ship.GetFuelCost(fuel, distFst / fstJumpFactor);
 
+                // must have enough fuel to make first jump
+                if (fuel < fuelCostFst + this.minimumFuelLevel)
+                {
+                    return null;
+                }
+
+                // must refuel to a higher fuel level
+                if (refuelLevel.Value < (fuel - fuelCostFst))
+                {
+                    return null;
+                }
+
                 timeRst = 0;
 
-                timeRstRefuel = this.jumpTime.Get(refuel, to, rstBoostType, refuelType, refuelLevel.Value - (fuel + fuelCostFst));
+                timeRstRefuel = this.jumpTime.Get(refuel, rstBoostType, refuelType, refuelLevel.Value - (fuel + fuelCostFst));
                 var distRst = Vector3.Distance(refuel.Coordinates, to.Coordinates);
                 fuelCostRst = this.ship.GetFuelCost(refuelLevel.Value, distRst / rstJumpFactor);
             }
             else
             {
-                timeFst = this.jumpTime.Get(from, null, fstBoostType, RefuelType.None, null);
-                timeRst = this.jumpTime.Get(null, null, rstBoostType, RefuelType.None, null);
-                timeRstRefuel = this.jumpTime.Get(null, null, rstBoostType, refuelType, rstJumps * this.ship.FSD.MaxFuelPerJump + refuelLevel.Value - fuel);
+                // must have enough fuel to make first jump
+                if (fuel < this.ship.FSD.MaxFuelPerJump + this.minimumFuelLevel)
+                {
+                    return null;
+                }
+
+                // must refuel to a higher fuel level
+                if (refuelLevel.Value < fuel)
+                {
+                    return null;
+                }
+
+                timeFst = this.jumpTime.Get(from, fstBoostType, RefuelType.None, null);
+                timeRst = this.jumpTime.Get(null, rstBoostType, RefuelType.None, null);
+                timeRstRefuel = this.jumpTime.Get(null, rstBoostType, refuelType, rstJumps * this.ship.FSD.MaxFuelPerJump + refuelLevel.Value - fuel);
                 fuelCostRst = this.ship.FSD.MaxFuelPerJump;
             }
 
