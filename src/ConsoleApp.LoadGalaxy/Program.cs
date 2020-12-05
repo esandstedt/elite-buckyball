@@ -22,10 +22,14 @@ namespace ConsoleApp.LoadGalaxy
                 .AddLogging()
                 .AddDbContext<ApplicationDbContext>(options =>
                 {
-                    options.UseMySql(configuration.GetConnectionString("Default"), b =>
-                    {
-                        b.EnableRetryOnFailure();
-                    });
+                    options.UseMySql(
+                        configuration.GetConnectionString("Default"),
+                        new MySqlServerVersion(new Version(8, 0, 21)),
+                        mysqlOptions =>
+                        {
+                            mysqlOptions.EnableRetryOnFailure();
+                        }
+                    );
                 })
                 .AddSingleton<IConfiguration>(configuration)
                 .AddTransient<IStarSystemRepository, StarSystemRepository>()
