@@ -128,6 +128,27 @@ namespace EliteBuckyball.Infrastructure.Repository
 
                             sectors.Add(sector);
                         }
+
+                        /*
+                        var staleSectors = this.sectors.Values
+                            .Where(x => x.LastInvoked < DateTime.Now.Subtract(TimeSpan.FromHours(1)))
+                            .ToList();
+
+                        if (staleSectors.Any())
+                        {
+                            Console.WriteLine(
+                                "{0} Stale sectors: {1} {2}", 
+                                DateTime.Now.ToString(@"HH\:mm\:ss"),
+                                this.mode.ToString(),
+                                staleSectors.Count
+                            );
+
+                            foreach (var sector in staleSectors)
+                            {
+                                this.sectors.Remove((sector.X, sector.Y, sector.Z));
+                            }
+                        }
+                         */
                     }
                 }
             }

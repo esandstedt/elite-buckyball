@@ -15,7 +15,7 @@ namespace EliteBuckyball.Infrastructure.Repository
         public int X { get; }
         public int Y { get; }
         public int Z { get; }
-        public DateTime Timestamp { get; private set; }
+        public DateTime LastInvoked { get; private set; }
 
         private readonly List<StarSystem> list;
 
@@ -93,13 +93,13 @@ namespace EliteBuckyball.Infrastructure.Repository
             this.X = x;
             this.Y = y;
             this.Z = z;
-            this.Timestamp = DateTime.Now;
+            this.LastInvoked = DateTime.Now;
             this.list = list;
         }
 
         public IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance)
         {
-            this.Timestamp = DateTime.Now;
+            this.LastInvoked = DateTime.Now;
             return this.list.Where(x => Vector3.DistanceSquared(coordinate, x.Coordinates) < distance * distance);
         }
 
