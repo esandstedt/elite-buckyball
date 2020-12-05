@@ -141,6 +141,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 })
                 .ToList();
 
+            var shipHandler = new ShipHandler(ship);
+
             var refuelStarFinder = new RefuelStarFinder(
                 dbContext,
                 new StarSystemRepository(
@@ -150,7 +152,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                         Mode = "scoopable"
                     }
                 ),
-                ship,
+                shipHandler,
                 app.UseFsdBoost
             );
 
@@ -158,7 +160,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 repository,
                 refuelStarFinder,
                 edgeConstraints,
-                ship,
+                shipHandler,
                 refuelLevels,
                 start,
                 goal,
@@ -167,7 +169,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     UseFsdBoost = app.UseFsdBoost,
                     UseRefuelStarFinder = app.UseRefuelStarFinder,
                     MultiJumpRangeFactor = app.MultiJumpRangeFactor,
-                    NeighborRangeMin = Math.Max(500, 6 * ship.GetJumpRange(ship.FSD.MaxFuelPerJump)),
+                    NeighborRangeMin = Math.Max(500, 6 * shipHandler.BestJumpRange),
                     NeighborRangeMax = 5000,
                     NeighborRangeMultiplier = 2,
                     NeighborCountMin = 10,

@@ -14,18 +14,19 @@ namespace EliteBuckyball.Infrastructure
     {
         private readonly ApplicationDbContext dbContext;
         private readonly IStarSystemRepository starSystemRepository;
-        private readonly Ship ship;
+        private readonly ShipHandler shipHandler;
+        private Ship ship => this.shipHandler.Ship;
         private readonly bool useFsdBoost;
 
         public RefuelStarFinder(
             ApplicationDbContext dbContext,
             IStarSystemRepository starSystemRepository,
-            Ship ship,
+            ShipHandler shipHandler,
             bool useFsdBoost)
         {
             this.dbContext = dbContext;
             this.starSystemRepository = starSystemRepository;
-            this.ship = ship;
+            this.shipHandler = shipHandler;
             this.useFsdBoost = useFsdBoost;
         }
 
@@ -136,7 +137,7 @@ namespace EliteBuckyball.Infrastructure
                 fstJumpFactor = 1;
             }
 
-            var fstJumpRange = ship.GetJumpRange(fromFuel);
+            var fstJumpRange = shipHandler.GetJumpRange(fromFuel);
             var fstDistance = fstJumpFactor * fstJumpRange;
             var fstPercent = fstDistance / distance;
 
@@ -150,7 +151,7 @@ namespace EliteBuckyball.Infrastructure
                 sndJumpFactor = 1;
             }
 
-            var sndJumpRange = ship.GetJumpRange(toRefuel - this.ship.FSD.MaxFuelPerJump);
+            var sndJumpRange = shipHandler.GetJumpRange(toRefuel - this.ship.FSD.MaxFuelPerJump);
             var sndDistance = sndJumpFactor * sndJumpRange;
             var sndPercent = 1 - (sndDistance / distance);
 
@@ -173,7 +174,7 @@ namespace EliteBuckyball.Infrastructure
         {
             var distance = Vector3.Distance(from.Coordinates, to.Coordinates);
 
-            var jumpRange = this.ship.GetJumpRange(fuel);
+            var jumpRange = this.shipHandler.GetJumpRange(fuel);
             double jumpFactor;
             if (from.HasNeutron && from.DistanceToNeutron < 100)
             {
