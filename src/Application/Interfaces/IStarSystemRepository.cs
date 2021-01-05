@@ -20,7 +20,7 @@ namespace EliteBuckyball.Application.Interfaces
 
         IEnumerable<StarSystem> GetNeighbors(StarSystem system, double distance);
 
-        IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance);
+        IEnumerable<StarSystem> GetNeighbors(Vector3 position, double distance);
 
         void Create(StarSystem system);
 

@@ -12,7 +12,6 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         public List<EdgeConstraintSettings> EdgeConstraints { get; set; }
         public bool UseFsdBoost { get; set; }
         public bool UseRefuelStarFinder { get; set; }
-        public double MultiJumpRangeFactor { get; set; }
         public bool NeutronBoostedAtStart { get; set; }
     }
 
@@ -32,9 +31,12 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
     public class RefuelSettings
     {
-        public double Min { get; set; }
-        public double Max { get; set; }
-        public string Type { get; set; }
+        public string RefuelType { get; set; }
+        public double RefuelMin { get; set; }
+        public double RefuelMax { get; set; }
+        public int? JumpsMin { get; set; }
+        public int? JumpsMax { get; set; }
+        public double? MultiJumpRangeFactor { get; set; }
     }
 
     public class EdgeConstraintSettings

@@ -14,10 +14,12 @@ namespace EliteBuckyball.Application.EdgeConstraints
         private readonly Vector3 goal;
         private readonly float radiusSquared;
 
-        public CylinderEdgeConstraint(StarSystem start, StarSystem goal, float radius)
+        public CylinderEdgeConstraint(StarSystem start, StarSystem goal, float radius) : this(start.Coordinates, goal.Coordinates, radius) { }
+
+        public CylinderEdgeConstraint(Vector3 start, Vector3 goal, float radius)
         {
-            this.start = start.Coordinates;
-            this.goal = goal.Coordinates;
+            this.start = start;
+            this.goal = goal;
             this.radiusSquared = radius * radius;
         }
 

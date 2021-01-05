@@ -66,8 +66,15 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 FuelScoopRate = app.Ship.FuelScoopRate
             };
 
-            var refuelLevels = app.Ship.RefuelLevels
-                .Select(x => new RefuelRange(x.Type, x.Min, x.Max))
+            var jumpParameters = app.Ship.RefuelLevels
+                .Select(x => new JumpParameters(
+                    (RefuelType)Enum.Parse(typeof(RefuelType), x.RefuelType, true),
+                    x.RefuelMin,
+                    x.RefuelMax,
+                    x.JumpsMin,
+                    x.JumpsMax,
+                    x.MultiJumpRangeFactor
+                ))
                 .ToList();
 
             var start = repository.GetByName(app.Start);
@@ -134,6 +141,10 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                                 .ToList()
                         );
                     }
+                    else if (x.Type == "Beagle")
+                    {
+                        return new BeagleEdgeConstraint();
+                    }
                     else
                     {
                         throw new InvalidOperationException();
@@ -161,14 +172,13 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 refuelStarFinder,
                 edgeConstraints,
                 shipHandler,
-                refuelLevels,
+                jumpParameters,
                 start,
                 goal,
                 new NodeHandler.Options
                 {
                     UseFsdBoost = app.UseFsdBoost,
                     UseRefuelStarFinder = app.UseRefuelStarFinder,
-                    MultiJumpRangeFactor = app.MultiJumpRangeFactor,
                     NeighborRangeMin = Math.Max(500, 6 * shipHandler.BestJumpRange),
                     NeighborRangeMax = 5000,
                     NeighborRangeMultiplier = 2,

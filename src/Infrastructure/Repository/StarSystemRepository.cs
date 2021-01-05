@@ -79,34 +79,20 @@ namespace EliteBuckyball.Infrastructure.Repository
             return this.GetNeighbors(system.Coordinates, distance);
         }
 
-        public IEnumerable<StarSystem> GetNeighbors(Vector3 coordinate, double distance)
+        public IEnumerable<StarSystem> GetNeighbors(Vector3 position, double distance)
         {
-            var minSectorX = (int)Math.Floor((coordinate.X - distance) / SECTOR_SIZE);
-            var maxSectorX = (int)Math.Floor((coordinate.X + distance) / SECTOR_SIZE);
-            var minSectorY = (int)Math.Floor((coordinate.Y - distance) / SECTOR_SIZE);
-            var maxSectorY = (int)Math.Floor((coordinate.Y + distance) / SECTOR_SIZE);
-            var minSectorZ = (int)Math.Floor((coordinate.Z - distance) / SECTOR_SIZE);
-            var maxSectorZ = (int)Math.Floor((coordinate.Z + distance) / SECTOR_SIZE);
-
             var sectors = new List<Sector>();
             var keys = new List<(int x, int y, int z)>();
 
-            for (var x = minSectorX; x <= maxSectorX; x++)
+            foreach (var key in this.GetSectorKeys(position, distance))
             {
-                for (var y = minSectorY; y <= maxSectorY; y++)
+                if (!this.sectors.ContainsKey(key))
                 {
-                    for (var z = minSectorZ; z <= maxSectorZ; z++)
-                    {
-                        var key = (x, y, z);
-                        if (!this.sectors.ContainsKey(key))
-                        {
-                            keys.Add(key);
-                        }
-                        else
-                        {
-                            sectors.Add(this.sectors[key]);
-                        }
-                    }
+                    keys.Add(key);
+                }
+                else
+                {
+                    sectors.Add(this.sectors[key]);
                 }
             }
 
@@ -129,31 +115,54 @@ namespace EliteBuckyball.Infrastructure.Repository
                             sectors.Add(sector);
                         }
 
-                        /*
                         var staleSectors = this.sectors.Values
-                            .Where(x => x.LastInvoked < DateTime.Now.Subtract(TimeSpan.FromHours(1)))
+                            .Where(x => x.LastInvoked < DateTime.Now.Subtract(TimeSpan.FromHours(2)))
                             .ToList();
 
                         if (staleSectors.Any())
                         {
+                            /*
                             Console.WriteLine(
                                 "{0} Stale sectors: {1} {2}", 
                                 DateTime.Now.ToString(@"HH\:mm\:ss"),
                                 this.mode.ToString(),
                                 staleSectors.Count
                             );
+                             */
 
                             foreach (var sector in staleSectors)
                             {
                                 this.sectors.Remove((sector.X, sector.Y, sector.Z));
                             }
                         }
-                         */
                     }
                 }
             }
 
-            return sectors.SelectMany(s => s.GetNeighbors(coordinate, distance));
+            return sectors.SelectMany(s => s.GetNeighbors(position, distance));
+        }
+
+        private IEnumerable<(int x, int y, int z)> GetSectorKeys(Vector3 position, double distance) {
+            var minSectorX = (int)Math.Floor((position.X - distance) / SECTOR_SIZE);
+            var maxSectorX = (int)Math.Floor((position.X + distance) / SECTOR_SIZE);
+            var minSectorY = (int)Math.Floor((position.Y - distance) / SECTOR_SIZE);
+            var maxSectorY = (int)Math.Floor((position.Y + distance) / SECTOR_SIZE);
+            var minSectorZ = (int)Math.Floor((position.Z - distance) / SECTOR_SIZE);
+            var maxSectorZ = (int)Math.Floor((position.Z + distance) / SECTOR_SIZE);
+
+            var sectors = new List<Sector>();
+            var keys = new List<(int x, int y, int z)>();
+
+            for (var x = minSectorX; x <= maxSectorX; x++)
+            {
+                for (var y = minSectorY; y <= maxSectorY; y++)
+                {
+                    for (var z = minSectorZ; z <= maxSectorZ; z++)
+                    {
+                        yield return (x, y, z);
+                    }
+                }
+            }
         }
 
         public void Create(StarSystem system)
