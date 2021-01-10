@@ -189,7 +189,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 {
                     UseFsdBoost = app.UseFsdBoost,
                     UseRefuelStarFinder = app.UseRefuelStarFinder,
-                    NeighborRangeMin = Math.Max(500, 6 * shipHandler.BestJumpRange),
+                    NeighborRangeMin = app.NeighborRangeMin,
                     NeighborRangeMax = 5000,
                     NeighborRangeMultiplier = 2,
                     NeighborCountMin = 10,

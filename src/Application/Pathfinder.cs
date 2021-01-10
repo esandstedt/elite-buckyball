@@ -54,32 +54,16 @@ namespace EliteBuckyball.Application
                     closest = current;
                     closestDistance = distance;
 
-                    Console.WriteLine("{0} {1,8} {2,8} {3,8} | {4,6} {5,6} | {6,6} {7}",
+                    Console.WriteLine("{0} {1,8} {2,8} {3,8} | {4,6} {5,3}% {6}",
                         DateTime.Now.ToString(@"HH\:mm\:ss"),
                         i,
                         this.open.Count,
                         this.cameFrom.Count,
-                        TimeSpan.FromSeconds((int)this.g[closest]),
-                        TimeSpan.FromSeconds((int)closestDistance),
-                        TimeSpan.FromSeconds((int)this.f[current]),
-                        current
+                        TimeSpan.FromSeconds((int)this.f[closest]),
+                        (int)(100 * this.g[closest] / this.f[closest]),
+                        closest
                     );
                 }
-
-                /*
-                Console.WriteLine("{0} {1,8} {2,8} {3,8} | {4,6} {5,6} | {6,6} {7,6} {8,6}   {9}",
-                    (DateTime.Now - tStart).ToString(@"hh\:mm\:ss"),
-                    i,
-                    this.open.Count,
-                    this.cameFrom.Count,
-                    TimeSpan.FromSeconds((int)this.g[closest]),
-                    TimeSpan.FromSeconds((int)closestDistance),
-                    TimeSpan.FromSeconds((int)this.f[current]),
-                    TimeSpan.FromSeconds((int)this.g[current]),
-                    TimeSpan.FromSeconds((int)distance),
-                    current
-                );
-                 */
 
                 if (current.IsGoal)
                 {

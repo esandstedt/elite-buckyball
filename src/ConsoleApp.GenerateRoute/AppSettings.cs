@@ -15,6 +15,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         public bool NeutronBoostedAtStart { get; set; }
         public string RepositoryMode { get; set; }
         public int RepositorySectorSize { get; set; }
+        public int NeighborRangeMin { get; set; }
     }
 
     public class ShipSettings
