@@ -11,14 +11,17 @@ namespace EliteBuckyball.Application
         private const double TIME_FSD_CHARGE = 20;
         private const double TIME_FSD_COOLDOWN = 10;
         private const double TIME_NEUTRON_BOOST = 7 + 1.8; // charge + repair
+        private const double TIME_WHITE_DWARF_BOOST = 7 + 1.8; // charge + repair
         private const double TIME_SYNTHESIS_BOOST = 20;
         private const double TIME_TRAVEL_ZERO = 10;
-        private const double TIME_TRAVEL_MIN = 20;
+        //private const double TIME_TRAVEL_MIN = 20;
         private const double TIME_REFUEL_TRAVEL = 14;
         private const double TIME_GALAXY_MAP = 8;
+        private const double TIME_VISIT_STATION = 110;
 
         public const double NeutronWithoutRefuel = TIME_WITCHSPACE + TIME_TRAVEL_ZERO + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
-        private const double SynthesisWithoutRefuel = TIME_WITCHSPACE + TIME_SYNTHESIS_BOOST + TIME_FSD_CHARGE;
+        private const double WhiteDwarfWithoutRefuel = TIME_WITCHSPACE + TIME_TRAVEL_ZERO + TIME_WHITE_DWARF_BOOST + TIME_FSD_CHARGE;
+        public const double SynthesisWithoutRefuel = TIME_WITCHSPACE + TIME_SYNTHESIS_BOOST + TIME_FSD_CHARGE;
         private const double NormalWithoutRefuel = TIME_WITCHSPACE + TIME_FSD_COOLDOWN + TIME_FSD_CHARGE;
 
         private readonly Ship ship;
@@ -32,6 +35,8 @@ namespace EliteBuckyball.Application
         {
             var distanceToNeutron = from?.DistanceToNeutron ?? 0;
             var distanceToScoopable = from?.DistanceToScoopable ?? 0;
+            var distanceToStation = from?.DistanceToStation ?? 0;
+            var distanceToWhiteDwarf = from?.DistanceToWhiteDwarf ?? 0;
 
             if (refuelType == RefuelType.None)
             {
@@ -39,7 +44,7 @@ namespace EliteBuckyball.Application
             }
 
             // Block A/B refueling
-            if (refuelType != RefuelType.None && boost == BoostType.Neutron)
+            if (refuelType != RefuelType.None && (boost == BoostType.Neutron || boost == BoostType.WhiteDwarf))
             {
                 return null;
             }
@@ -62,8 +67,23 @@ namespace EliteBuckyball.Application
 
                 timeRst = TIME_FSD_CHARGE;
             }
+            else if (boost == BoostType.WhiteDwarf)
+            {
+                timeFst += this.GetSupercruiseTime(distanceToWhiteDwarf);
+                timeFst += TIME_WHITE_DWARF_BOOST;
 
-            if (refuelType == RefuelType.Default)
+                timeRst = TIME_FSD_CHARGE;
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+
+            if (refuelType == RefuelType.None)
+            {
+                // No added time
+            }
+            else if (refuelType == RefuelType.Scoop)
             {
                 var timeRefuelScoop = refuelLevel.Value / this.ship.FuelScoopRate;
 
@@ -73,7 +93,7 @@ namespace EliteBuckyball.Application
 
                 timeRst = Math.Max(timeRst, timeRefuel);
             }
-            else if (refuelType == RefuelType.Heatsink)
+            else if (refuelType == RefuelType.ScoopHeatsink)
             {
                 var timeRefuelScoop = refuelLevel.Value / this.ship.FuelScoopRate;
                 var timeRefuelParallel = TIME_GALAXY_MAP + TIME_REFUEL_TRAVEL + TIME_FSD_CHARGE;
@@ -86,6 +106,15 @@ namespace EliteBuckyball.Application
                 var timeRefuel = this.GetSupercruiseTime(distanceToScoopable) + timeRefuelScoop;
 
                 timeRst = Math.Max(timeRst, timeRefuel);
+            } 
+            else if (refuelType == RefuelType.Station)
+            {
+                var timeRefuel = this.GetSupercruiseTime(distanceToStation) + TIME_VISIT_STATION;
+                timeRst = Math.Max(timeRst, timeRefuel);
+            }
+            else
+            {
+                throw new NotImplementedException();
             }
 
             return timeFst + timeRst;
@@ -114,6 +143,19 @@ namespace EliteBuckyball.Application
                     return TIME_WITCHSPACE + this.GetSupercruiseTime(distanceToNeutron) + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
                 }
             }
+            else if (boost == BoostType.WhiteDwarf)
+            {
+                var distanceToWhiteDwarf = from?.DistanceToWhiteDwarf ?? 0;
+
+                if (distanceToWhiteDwarf == 0)
+                {
+                    return WhiteDwarfWithoutRefuel;
+                }
+                else
+                {
+                    return TIME_WITCHSPACE + this.GetSupercruiseTime(distanceToWhiteDwarf) + TIME_NEUTRON_BOOST + TIME_FSD_CHARGE;
+                }
+            }
             else
             {
                 throw new NotImplementedException();
@@ -127,10 +169,14 @@ namespace EliteBuckyball.Application
                 return TIME_TRAVEL_ZERO;
             }
 
+            /*
             return Math.Max(
                 TIME_TRAVEL_MIN,
                 12 * Math.Log(distance)
             );
+             */
+
+            return 45 + 0.075 * distance;
         }
     }
 
@@ -138,6 +184,7 @@ namespace EliteBuckyball.Application
     {
         None,
         Synthesis,
-        Neutron
+        Neutron,
+        WhiteDwarf
     }
 }

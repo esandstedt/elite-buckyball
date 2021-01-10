@@ -39,6 +39,12 @@ namespace EliteBuckyball.Infrastructure.Persistence.Entities
         [Column("distanceToScoopable")]
         public int? DistanceToScoopable { get; set; }
 
+        [Column("distanceToStation")]
+        public int? DistanceToStation { get; set; }
+
+        [Column("distanceToWhiteDwarf")]
+        public int? DistanceToWhiteDwarf { get; set; }
+
         [Column("date")]
         public DateTime? Date { get; set; }
 

@@ -8,8 +8,9 @@ namespace EliteBuckyball.Application
     {
         None,
         Initial,
-        Default,
-        Heatsink
+        Scoop,
+        ScoopHeatsink,
+        Station
     }
 
     public class JumpParameters

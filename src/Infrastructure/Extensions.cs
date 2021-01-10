@@ -19,6 +19,10 @@ namespace EliteBuckyball.Infrastructure
                 DistanceToNeutron = system.DistanceToNeutron ?? default,
                 HasScoopable = system.DistanceToScoopable.HasValue,
                 DistanceToScoopable = system.DistanceToScoopable ?? default,
+                HasStation = system.DistanceToStation.HasValue,
+                DistanceToStation = system.DistanceToStation ?? default,
+                HasWhiteDwarf = system.DistanceToWhiteDwarf.HasValue,
+                DistanceToWhiteDwarf = system.DistanceToWhiteDwarf ?? default,
                 Date = system.Date ?? default
             };
         }

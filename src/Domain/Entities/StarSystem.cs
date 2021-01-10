@@ -22,6 +22,14 @@ namespace EliteBuckyball.Domain.Entities
 
         public int DistanceToScoopable { get; set; }
 
+        public bool HasStation { get; set; }
+
+        public int DistanceToStation { get; set; }
+
+        public bool HasWhiteDwarf { get; set; }
+
+        public int DistanceToWhiteDwarf { get; set; }
+
         public DateTime Date { get; set; }
 
         public override int GetHashCode()

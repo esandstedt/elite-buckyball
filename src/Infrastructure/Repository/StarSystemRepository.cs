@@ -6,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -16,15 +15,15 @@ namespace EliteBuckyball.Infrastructure.Repository
     public class StarSystemRepository : IStarSystemRepository
     {
 
-        public const int SECTOR_SIZE = 500;
-
         public class Options
         {
             public string Mode { get; set; }
+            public int SectorSize { get; set; }
         }
 
         private readonly ApplicationDbContext dbContext;
         private readonly string mode;
+        private readonly int sectorSize;
         private readonly Dictionary<(int, int, int), Sector> sectors;
 
         private readonly object lockObject = new object();
@@ -35,6 +34,7 @@ namespace EliteBuckyball.Infrastructure.Repository
         {
             this.dbContext = dbContext;
             this.mode = options.Mode;
+            this.sectorSize = options.SectorSize;
             this.sectors = new Dictionary<(int, int, int), Sector>();
         }
 
@@ -143,12 +143,12 @@ namespace EliteBuckyball.Infrastructure.Repository
         }
 
         private IEnumerable<(int x, int y, int z)> GetSectorKeys(Vector3 position, double distance) {
-            var minSectorX = (int)Math.Floor((position.X - distance) / SECTOR_SIZE);
-            var maxSectorX = (int)Math.Floor((position.X + distance) / SECTOR_SIZE);
-            var minSectorY = (int)Math.Floor((position.Y - distance) / SECTOR_SIZE);
-            var maxSectorY = (int)Math.Floor((position.Y + distance) / SECTOR_SIZE);
-            var minSectorZ = (int)Math.Floor((position.Z - distance) / SECTOR_SIZE);
-            var maxSectorZ = (int)Math.Floor((position.Z + distance) / SECTOR_SIZE);
+            var minSectorX = (int)Math.Floor((position.X - distance) / this.sectorSize);
+            var maxSectorX = (int)Math.Floor((position.X + distance) / this.sectorSize);
+            var minSectorY = (int)Math.Floor((position.Y - distance) / this.sectorSize);
+            var maxSectorY = (int)Math.Floor((position.Y + distance) / this.sectorSize);
+            var minSectorZ = (int)Math.Floor((position.Z - distance) / this.sectorSize);
+            var maxSectorZ = (int)Math.Floor((position.Z + distance) / this.sectorSize);
 
             var sectors = new List<Sector>();
             var keys = new List<(int x, int y, int z)>();
@@ -181,12 +181,14 @@ namespace EliteBuckyball.Infrastructure.Repository
                     X = system.Coordinates.X,
                     Y = system.Coordinates.Y,
                     Z = system.Coordinates.Z,
-                    SectorX = (int)Math.Floor(system.Coordinates.X / SECTOR_SIZE),
-                    SectorY = (int)Math.Floor(system.Coordinates.Y / SECTOR_SIZE),
-                    SectorZ = (int)Math.Floor(system.Coordinates.Z / SECTOR_SIZE),
+                    SectorX = (int)Math.Floor(system.Coordinates.X / this.sectorSize),
+                    SectorY = (int)Math.Floor(system.Coordinates.Y / this.sectorSize),
+                    SectorZ = (int)Math.Floor(system.Coordinates.Z / this.sectorSize),
                     Date = system.Date.Date,
                     DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null,
                     DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null,
+                    DistanceToStation = system.HasStation ? (int?)system.DistanceToStation : null,
+                    DistanceToWhiteDwarf = system.HasWhiteDwarf ? (int?)system.DistanceToWhiteDwarf : null,
                 };
 
                 dbContext.Add(entity);
@@ -241,12 +243,14 @@ namespace EliteBuckyball.Infrastructure.Repository
             entity.X = system.Coordinates.X;
             entity.Y = system.Coordinates.Y;
             entity.Z = system.Coordinates.Z;
-            entity.SectorX = (int)Math.Floor(system.Coordinates.X / SECTOR_SIZE);
-            entity.SectorY = (int)Math.Floor(system.Coordinates.Y / SECTOR_SIZE);
-            entity.SectorZ = (int)Math.Floor(system.Coordinates.Z / SECTOR_SIZE);
+            entity.SectorX = (int)Math.Floor(system.Coordinates.X / this.sectorSize);
+            entity.SectorY = (int)Math.Floor(system.Coordinates.Y / this.sectorSize);
+            entity.SectorZ = (int)Math.Floor(system.Coordinates.Z / this.sectorSize);
             entity.Date = system.Date.Date;
             entity.DistanceToNeutron = system.HasNeutron ? (int?)system.DistanceToNeutron : null;
             entity.DistanceToScoopable = system.HasScoopable ? (int?)system.DistanceToScoopable : null;
+            entity.DistanceToStation = system.HasStation ? (int?)system.DistanceToStation : null;
+            entity.DistanceToWhiteDwarf = system.HasWhiteDwarf ? (int?)system.DistanceToWhiteDwarf : null;
         }
     }
 }

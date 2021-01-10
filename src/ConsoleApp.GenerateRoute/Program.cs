@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace EliteBuckyball.ConsoleApp.GenerateRoute
@@ -46,7 +47,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                 dbContext,
                 new StarSystemRepository.Options
                 {
-                    Mode = "neutron"
+                    Mode = "all",
+                    SectorSize = app.RepositorySectorSize,
                 }
             );
 
@@ -86,7 +88,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
             var goal = repository.GetByName(app.Goal);
 
-            var edgeConstraints = app.EdgeConstraints
+            var edgeConstraints = (app.EdgeConstraints ?? new List<EdgeConstraintSettings>())
                 .Select<EdgeConstraintSettings, IEdgeConstraint>(x =>
                 {
                     if (x.Type == "Angle")
@@ -160,7 +162,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     dbContext,
                     new StarSystemRepository.Options
                     {
-                        Mode = "scoopable"
+                        Mode = "scoopable",
+                        SectorSize = app.RepositorySectorSize,
                     }
                 ),
                 shipHandler,
@@ -168,7 +171,14 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
             );
 
             var nodeHandler = new NodeHandler(
-                repository,
+                new StarSystemRepository(
+                    dbContext,
+                    new StarSystemRepository.Options
+                    {
+                        Mode = app.RepositoryMode,
+                        SectorSize = app.RepositorySectorSize,
+                    }
+                ),
                 refuelStarFinder,
                 edgeConstraints,
                 shipHandler,
@@ -183,7 +193,7 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     NeighborRangeMax = 5000,
                     NeighborRangeMultiplier = 2,
                     NeighborCountMin = 10,
-                    NeighborCountMax = 1000,
+                    NeighborCountMax = 1000000,
                 }
             );
 

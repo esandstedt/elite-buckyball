@@ -23,6 +23,8 @@ namespace ConsoleApp.LoadGalaxy
         [JsonPropertyName("bodies")]
         public List<BodyDto> Bodies { get; set; }
 
+        [JsonPropertyName("stations")]
+        public List<StationDto> Stations { get; set; }
     }
 
     public class CoordinatesDto
@@ -54,5 +56,23 @@ namespace ConsoleApp.LoadGalaxy
         [JsonPropertyName("distanceToArrival")]
         public float DistanceToArrival { get; set; }
 
+    }
+
+    public class StationDto
+    {
+        [JsonPropertyName("name")]
+        public string Name { get; set; }
+
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+
+        [JsonPropertyName("distanceToArrival")]
+        public float DistanceToArrival { get; set; }
+
+        [JsonPropertyName("controllingFaction")]
+        public string ControllingFaction { get; set; }
+
+        [JsonPropertyName("services")]
+        public List<string> Services { get; set; }
     }
 }

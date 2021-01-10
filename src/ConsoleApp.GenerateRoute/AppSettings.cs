@@ -13,6 +13,8 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
         public bool UseFsdBoost { get; set; }
         public bool UseRefuelStarFinder { get; set; }
         public bool NeutronBoostedAtStart { get; set; }
+        public string RepositoryMode { get; set; }
+        public int RepositorySectorSize { get; set; }
     }
 
     public class ShipSettings

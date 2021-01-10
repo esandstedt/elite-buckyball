@@ -36,6 +36,15 @@ namespace ConsoleApp.LoadGalaxy
             "M (Red dwarf) Star"
         });
 
+        private static readonly HashSet<string> STATION_TYPES = new HashSet<string>(new List<string>
+        {
+            "Asteroid base",
+            "Coriolis Starport",
+            "Ocellus Starport",
+            "Orbis Starport",
+            "Outpost",
+        });
+
         public App(
             IConfiguration configuration,
             IStarSystemRepository starSystemRepository)
@@ -70,49 +79,65 @@ namespace ConsoleApp.LoadGalaxy
 
                         // Restricted to SagA* route
                         var coords = result.Coordinates;
-                        if (-1500 < coords.X && coords.X < 500 &&
-                            -1500 < coords.Y && coords.Y < 500 &&
-                             -500 < coords.Z && coords.Z < 26000)
+                        if (coords.X < -1500 || 500 < coords.X ||
+                            coords.Y < -1500 || 500 < coords.Y ||
+                            coords.Z < -500 || 26000 < coords.Z)
                         {
-                            var neutron = result.Bodies
-                                .Where(x => x.DistanceToArrival < 100)
-                                .OrderBy(x => x.DistanceToArrival)
-                                .FirstOrDefault(x => x.SubType == "Neutron Star");
+                            continue;
+                        }
+                        
+                        var neutron = result.Bodies
+                            .Where(x => x.DistanceToArrival < 100)
+                            .OrderBy(x => x.DistanceToArrival)
+                            .FirstOrDefault(x => x.SubType == "Neutron Star");
 
-                            var scoopable = result.Bodies
-                                .Where(x => x.DistanceToArrival < 100)
-                                .OrderBy(x => x.DistanceToArrival)
-                                .FirstOrDefault(x => SCOOPABLE_SUBTYPES.Contains(x.SubType));
+                        var scoopable = result.Bodies
+                            .Where(x => x.DistanceToArrival < 100)
+                            .OrderBy(x => x.DistanceToArrival)
+                            .FirstOrDefault(x => SCOOPABLE_SUBTYPES.Contains(x.SubType));
 
-                            if (neutron != null || scoopable != null)
+                        var station = result.Stations
+                            .Where(x => x.Services.Contains("Refuel"))
+                            .OrderBy(x => x.DistanceToArrival)
+                            .FirstOrDefault(x => STATION_TYPES.Contains(x.Type));
+
+                        var whiteDwarf = result.Bodies
+                            .Where(x => x.DistanceToArrival < 100)
+                            .OrderBy(x => x.DistanceToArrival)
+                            .FirstOrDefault(x => x.SubType.StartsWith("White Dwarf"));
+
+                        if (neutron != null || scoopable != null)
+                        {
+                            var system = new StarSystem
                             {
-                                var system = new StarSystem
-                                {
-                                    Id = result.Id,
-                                    Coordinates = new Vector3(coords.X, coords.Y, coords.Z),
-                                    Name = result.Name,
-                                    Date = DateTime.Today,
-                                    HasNeutron = neutron != null,
-                                    DistanceToNeutron = neutron != null ? (int)neutron.DistanceToArrival : 0,
-                                    HasScoopable = scoopable != null,
-                                    DistanceToScoopable = scoopable != null ? (int)scoopable.DistanceToArrival : 0,
-                                };
+                                Id = result.Id,
+                                Coordinates = new Vector3(coords.X, coords.Y, coords.Z),
+                                Name = result.Name,
+                                Date = DateTime.Today,
+                                HasNeutron = neutron != null,
+                                DistanceToNeutron = neutron != null ? (int)neutron.DistanceToArrival : 0,
+                                HasScoopable = scoopable != null,
+                                DistanceToScoopable = scoopable != null ? (int)scoopable.DistanceToArrival : 0,
+                                HasStation = station != null,
+                                DistanceToStation = station != null ? (int)station.DistanceToArrival : 0,
+                                HasWhiteDwarf = whiteDwarf != null,
+                                DistanceToWhiteDwarf = whiteDwarf != null ? (int)whiteDwarf.DistanceToArrival : 0,
+                            };
 
-                                systems.Add(system);
+                            systems.Add(system);
 
-                                j += 1;
-                                Console.WriteLine("{0} {1,8} {2,8} {3}", 
-                                    (DateTime.Now - tStart).ToString(@"hh\:mm\:ss"),
-                                    i,
-                                    j,
-                                    system.Name
-                                );
+                            j += 1;
+                            Console.WriteLine("{0} {1,8} {2,8} {3}", 
+                                (DateTime.Now - tStart).ToString(@"hh\:mm\:ss"),
+                                i,
+                                j,
+                                system.Name
+                            );
 
-                                if (1000 <= systems.Count)
-                                {
-                                    this.starSystemRepository.CreateMany(systems);
-                                    systems.Clear();
-                                }
+                            if (1000 <= systems.Count)
+                            {
+                                this.starSystemRepository.CreateMany(systems);
+                                systems.Clear();
                             }
                         }
                     }
