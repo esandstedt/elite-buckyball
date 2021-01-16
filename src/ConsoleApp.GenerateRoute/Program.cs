@@ -225,10 +225,11 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
             Console.WriteLine();
             Console.WriteLine("route:");
-            for (var i = 0; i < route.Count; i++) 
+            for (var i = 0; i < route.Count; i++)
             {
                 var prev = 0 < i ? route[i - 1] : default;
                 var node = route[i];
+                var next = i < route.Count - 1 ? route[i + 1] : default;
                 
                 var system = node.StarSystem;
 
@@ -241,36 +242,84 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
                     Console.WriteLine("    z: {0:0}", system.Coordinates.Z);
                 }
 
-                if (system.HasNeutron && system.DistanceToNeutron != 0)
+                var scoopable = false;
+                var neutron = false;
+                var whiteDwarf = false;
+                var boost = false;
+                double? fuel = null;
+
+                if (next != null)
                 {
-                    Console.WriteLine("    neutron: true");
+                    if (next.RefuelType == RefuelType.Scoop || next.RefuelType == RefuelType.ScoopHeatsink)
+                    {
+                        scoopable = true;
+                    }
+
+                    if (next.RefuelType != RefuelType.None)
+                    {
+                        fuel = next.RefuelAvg;
+                    }
+
+                    if (next.BoostType == BoostType.Neutron)
+                    {
+                        neutron = true;
+                    }
+                    else if (next.BoostType == BoostType.WhiteDwarf)
+                    {
+                        whiteDwarf = true;
+                    }
+                    else if (next.BoostType == BoostType.Synthesis)
+                    {
+                        boost = true;
+                    }
                 }
 
-                if (node.Jumps == 0)
-                {
-                    Console.WriteLine("    fuel: {0:0.00}", node.FuelAvg);
-                }
-                //if (prev.Fuel.Avg < node.Fuel.Avg)
-                else if (node.RefuelType != RefuelType.None && node.Jumps == 1)
+                if (scoopable && system.DistanceToScoopable != 0)
                 {
                     Console.WriteLine("    scoopable: true");
-                    Console.WriteLine("    fuel: {0:0.00}", node.FuelAvg);
                 }
-                else if (system.HasScoopable && system.DistanceToScoopable == 0)
+                else if (!scoopable && system.HasScoopable && system.DistanceToScoopable == 0)
                 {
                     Console.WriteLine("    scoopable: false");
                 }
 
-                if (!system.HasNeutron && app.UseFsdBoost)
+                if (neutron && system.DistanceToNeutron != 0)
+                {
+                    Console.WriteLine("    neutron: true");
+                }
+                else if (!neutron && system.HasNeutron && system.DistanceToNeutron == 0)
+                {
+                    Console.WriteLine("    neutron: false");
+                }
+
+                if (whiteDwarf && system.DistanceToWhiteDwarf != 0)
+                {
+                    Console.WriteLine("    white-dwarf: true");
+                    Console.WriteLine("    boost: true");
+                }
+                else if (!whiteDwarf && system.HasWhiteDwarf && system.DistanceToWhiteDwarf == 0)
+                {
+                    Console.WriteLine("    white-dwarf: false");
+                }
+
+                if (boost)
                 {
                     Console.WriteLine("    boost: true");
                 }
 
+                if (fuel.HasValue)
+                {
+                    Console.WriteLine("    fuel: {0:0.00}", fuel);
+                }
+
+                /*
                 if (i < route.Count - 1)
                 {
-                    //Console.WriteLine("    jumps: {0}", node.Jumps);
-                    //Console.WriteLine("    time: {0:0}", pathfinder.GetDistance(node, route[i+1]));
+                    Console.WriteLine("    x-fuel: {0}", node.FuelAvg);
+                    Console.WriteLine("    x-jumps: {0}", node.Jumps);
+                    Console.WriteLine("    x-time: {0:0}", pathfinder.GetDistance(node, route[i+1]));
                 }
+                 */
             }
         }
     }

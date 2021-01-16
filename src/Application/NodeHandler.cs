@@ -72,6 +72,7 @@ namespace EliteBuckyball.Application
                     this.start,
                     x.RefuelMin.Value,
                     x.RefuelMax.Value,
+                    BoostType.None,
                     RefuelType.None,
                     null,
                     null,
@@ -84,6 +85,7 @@ namespace EliteBuckyball.Application
             StarSystem system,
             double fuelMin,
             double fuelMax,
+            BoostType boostType,
             RefuelType refuelType,
             double? refuelMin,
             double? refuelMax,
@@ -92,11 +94,12 @@ namespace EliteBuckyball.Application
             var fuelAvg = (fuelMin + fuelMax) / 2.0;
 
             return new Node(
-                (system.Id, this.GetNodeFuelId(fuelAvg)),
+                (system.Id, this.GetNodeFuelId(fuelAvg), boostType, refuelType),
                 system,
                 system.Equals(this.goal),
                 fuelMin,
                 fuelMax,
+                boostType,
                 refuelType,
                 refuelMin,
                 refuelMax,
@@ -136,20 +139,20 @@ namespace EliteBuckyball.Application
         {
             var baseNode = (Node)node;
 
-            var boostType = this.GetBoostType(node.StarSystem);
+            var boostTypes = this.GetBoostTypes(node.StarSystem).ToList();
 
-            return this.GetNeighborsCached(node.StarSystem, boostType)
+            return this.GetNeighborsCached(node.StarSystem, boostTypes)
                 .AsParallel()
                 .AsUnordered()
                 //.Where(x => this.edgeConstraints.All(y => y.ValidBefore(node.StarSystem, x)))
-                .SelectMany(x => this.CreateEdges(baseNode, x, boostType))
+                .SelectMany(x => this.CreateEdges(baseNode, x, boostTypes))
                 .Where(x => x != null)
                 .Where(x => this.edgeConstraints.All(y => y.ValidAfter(x)))
                 .AsSequential()
                 .Cast<IEdge>();
         }
 
-        private List<StarSystem> GetNeighborsCached(StarSystem system, BoostType boostType)
+        private List<StarSystem> GetNeighborsCached(StarSystem system, List<BoostType> boostTypes)
         {
             if (this.neighborsCache.TryGetValue(system.Id, out List<StarSystem> value))
             {
@@ -157,9 +160,11 @@ namespace EliteBuckyball.Application
                 return value;
             }
 
+            var maxJumpFactor = boostTypes.Select(x => this.GetJumpFactor(x)).Max();
+
             var range = Math.Max(
                 this.options.NeighborRangeMin,
-                this.GetJumpFactor(boostType) * this.shipHandler.BestJumpRange
+                maxJumpFactor * this.shipHandler.BestJumpRange
             );
 
             List<StarSystem> result;
@@ -201,23 +206,26 @@ namespace EliteBuckyball.Application
                 .ToList();
         }
 
-        private IEnumerable<Edge> CreateEdges(Node node, StarSystem system, BoostType boostType)
+        private IEnumerable<Edge> CreateEdges(Node node, StarSystem system, List<BoostType> boostTypes)
         {
-            yield return this.CreateEdge(
-                node,
-                system,
-                boostType,
-                new JumpParameters(RefuelType.None, jumpsMax: 1)
-            );
-
-            foreach (var parameters in this.jumpParameters.Where(x => x.RefuelType != RefuelType.Initial))
+            foreach (var boostType in boostTypes)
             {
                 yield return this.CreateEdge(
                     node,
                     system,
                     boostType,
-                    parameters
+                    new JumpParameters(RefuelType.None, jumpsMax: 1)
                 );
+
+                foreach (var parameters in this.jumpParameters.Where(x => x.RefuelType != RefuelType.Initial))
+                {
+                    yield return this.CreateEdge(
+                        node,
+                        system,
+                        boostType,
+                        parameters
+                    );
+                }
             }
         }
 
@@ -284,6 +292,7 @@ namespace EliteBuckyball.Application
                 system,
                 min.Value.Fuel,
                 max.Value.Fuel,
+                boostType,
                 parameters.RefuelType,
                 parameters.RefuelMin,
                 parameters.RefuelMax,
@@ -525,26 +534,26 @@ namespace EliteBuckyball.Application
             };
         }
 
-        private BoostType GetBoostType(StarSystem system)
+        private IEnumerable<BoostType> GetBoostTypes(StarSystem system)
         {
             var canScoopFuel = 1e-6 < Math.Abs(this.ship.FuelScoopRate); // FuelScoopRate != 0
 
             if (system.HasNeutron && system.DistanceToNeutron < 100 && canScoopFuel)
             {
-                return BoostType.Neutron;
+                yield return BoostType.Neutron;
             }
-            else if (system.HasWhiteDwarf && system.DistanceToWhiteDwarf < 100 && canScoopFuel)
+
+            if (system.HasWhiteDwarf && system.DistanceToWhiteDwarf < 100 && canScoopFuel)
             {
-                return BoostType.WhiteDwarf;
+                yield return BoostType.WhiteDwarf;
             }
-            else if (this.options.UseFsdBoost)
+
+            if (this.options.UseFsdBoost)
             {
-                return BoostType.Synthesis;
+                yield return BoostType.Synthesis;
             }
-            else
-            {
-                return BoostType.None;
-            }
+
+            yield return BoostType.None;
         }
 
         private double GetJumpFactor(BoostType type)

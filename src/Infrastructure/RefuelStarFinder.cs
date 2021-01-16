@@ -95,26 +95,29 @@ namespace EliteBuckyball.Infrastructure
             }
 
             yield return new Node(
-                (0, 0),
+                (0, 0, to.BoostType, RefuelType.None),
                 candidate,
                 false,
                 to.RefuelMin.Value,
                 to.RefuelMax.Value,
-                to.RefuelType,
-                to.RefuelMin.Value,
-                to.RefuelMax.Value,
+                to.BoostType,
+                RefuelType.None,
+                null,
+                null,
                 1
             );
 
+
             yield return new Node(
-                to.Id,
+                (to.Id.Item1, to.Id.Item2, BoostType.None, to.RefuelType),
                 to.StarSystem,
                 to.IsGoal,
                 to.FuelMin,
                 to.FuelMax,
-                RefuelType.None,
-                0,
-                0,
+                BoostType.None,
+                to.RefuelType,
+                to.RefuelMin.Value,
+                to.RefuelMax.Value,
                 1
             );
         }

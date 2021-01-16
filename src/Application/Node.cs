@@ -8,11 +8,12 @@ namespace EliteBuckyball.Application
 {
     public class Node : INode
     {
-        public (long, ushort) Id { get; set; }
+        public (long, ushort, BoostType, RefuelType) Id { get; set; }
         public StarSystem StarSystem { get; set; }
         public bool IsGoal { get; set; }
         public double FuelMin { get; set; }
         public double FuelMax { get; set; }
+        public BoostType BoostType { get; set; }
         public RefuelType RefuelType { get; set; }
         public double? RefuelMin { get; set; }
         public double? RefuelMax { get; set; }
@@ -39,11 +40,12 @@ namespace EliteBuckyball.Application
         public Node() { }
 
         public Node(
-            (long, ushort) id,
+            (long, ushort, BoostType, RefuelType) id,
             StarSystem system,
             bool isGoal,
             double fuelMin,
             double fuelMax, 
+            BoostType boostType,
             RefuelType refuelType,
             double? refuelMin,
             double? refuelMax,
@@ -54,6 +56,7 @@ namespace EliteBuckyball.Application
             this.IsGoal = isGoal;
             this.FuelMin = fuelMin;
             this.FuelMax = fuelMax;
+            this.BoostType = boostType;
             this.RefuelType = refuelType;
             this.RefuelMin = refuelMin;
             this.RefuelMax = refuelMax;
