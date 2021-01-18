@@ -140,8 +140,9 @@ namespace EliteBuckyball.Application
             var baseNode = (Node)node;
 
             var boostTypes = this.GetBoostTypes(node.StarSystem).ToList();
+            var range = boostTypes.Max(this.GetJumpFactor) * this.shipHandler.BestJumpRange;
 
-            return this.GetNeighborsCached(node.StarSystem, boostTypes)
+            return this.GetNeighborsCached(node.StarSystem, range)
                 .AsParallel()
                 .AsUnordered()
                 //.Where(x => this.edgeConstraints.All(y => y.ValidBefore(node.StarSystem, x)))
@@ -152,7 +153,7 @@ namespace EliteBuckyball.Application
                 .Cast<IEdge>();
         }
 
-        private List<StarSystem> GetNeighborsCached(StarSystem system, List<BoostType> boostTypes)
+        private List<StarSystem> GetNeighborsCached(StarSystem system, double range)
         {
             if (this.neighborsCache.TryGetValue(system.Id, out List<StarSystem> value))
             {
@@ -160,11 +161,9 @@ namespace EliteBuckyball.Application
                 return value;
             }
 
-            var maxJumpFactor = boostTypes.Select(x => this.GetJumpFactor(x)).Max();
-
-            var range = Math.Max(
-                this.options.NeighborRangeMin,
-                maxJumpFactor * this.shipHandler.BestJumpRange
+            range = Math.Max(
+                range,
+                this.options.NeighborRangeMin
             );
 
             List<StarSystem> result;
@@ -364,6 +363,7 @@ namespace EliteBuckyball.Application
                 {
                     case RefuelType.Scoop:
                     case RefuelType.ScoopHeatsink:
+                    case RefuelType.ScoopReckless:
                         {
                             // must have scoopable 
                             if (!from.HasScoopable || 100 < from.DistanceToScoopable)

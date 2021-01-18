@@ -250,7 +250,9 @@ namespace EliteBuckyball.ConsoleApp.GenerateRoute
 
                 if (next != null)
                 {
-                    if (next.RefuelType == RefuelType.Scoop || next.RefuelType == RefuelType.ScoopHeatsink)
+                    if (next.RefuelType == RefuelType.Scoop || 
+                        next.RefuelType == RefuelType.ScoopHeatsink || 
+                        next.RefuelType == RefuelType.ScoopReckless)
                     {
                         scoopable = true;
                     }

@@ -10,6 +10,7 @@ namespace EliteBuckyball.Application
         Initial,
         Scoop,
         ScoopHeatsink,
+        ScoopReckless,
         Station
     }
 

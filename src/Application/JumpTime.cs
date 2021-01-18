@@ -107,6 +107,13 @@ namespace EliteBuckyball.Application
 
                 timeRst = Math.Max(timeRst, timeRefuel);
             } 
+            else if (refuelType == RefuelType.ScoopReckless)
+            {
+                var timeRefuelScoop = refuelLevel.Value / this.ship.FuelScoopRate;
+                var timeRefuel = this.GetSupercruiseTime(distanceToStation) + Math.Max(timeRefuelScoop, TIME_FSD_CHARGE);
+
+                timeRst = Math.Max(timeRst, timeRefuel);
+            }
             else if (refuelType == RefuelType.Station)
             {
                 var timeRefuel = this.GetSupercruiseTime(distanceToStation) + TIME_VISIT_STATION;
